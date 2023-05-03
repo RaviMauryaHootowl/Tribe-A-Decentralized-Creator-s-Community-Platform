@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useContext } from "react";
 import styled from "styled-components";
 import logo from "../../images/logo.svg";
 import googleLogo from "../../images/googleLogo.png";
 import orDividerImg from "../../images/orDivider.svg";
+import { StoreContext } from "../../utils/Store";
 
 const SignUpPageContainer = styled.div`
     width: 100%;
@@ -130,6 +131,17 @@ const SignUpButton = styled.button`
 `;
 
 const SignUpPage = () => {
+    const { state, dispatch } = useContext(StoreContext);
+
+    const googleLoginHandler = async (e) => {
+        e.preventDefault();
+        const idToken = await state.magic.oauth.loginWithRedirect({
+            provider: "google",
+            redirectURI: `${process.env.REACT_APP_URL}/redirect?link=/creator`,
+        });
+        console.log(idToken);
+    };
+
     return (
         <SignUpPageContainer>
             <SignUpHeroSection>
@@ -146,7 +158,7 @@ const SignUpPage = () => {
                     <br />
                     Create your community
                 </SignUpFormHeading>
-                <SignUpGoogleButton>
+                <SignUpGoogleButton onClick={googleLoginHandler}>
                     Sign Up with <GoogleLogo src={googleLogo} />
                 </SignUpGoogleButton>
                 <OrDivider src={orDividerImg} />
