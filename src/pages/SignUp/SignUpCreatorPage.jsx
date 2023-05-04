@@ -130,14 +130,14 @@ const SignUpButton = styled.button`
     }
 `;
 
-const SignUpPage = () => {
+const SignUpCreatorPage = () => {
     const { state, dispatch } = useContext(StoreContext);
 
     const googleLoginHandler = async (e) => {
         e.preventDefault();
         const idToken = await state.magic.oauth.loginWithRedirect({
             provider: "google",
-            redirectURI: `${process.env.REACT_APP_URL}/redirect?link=/home`,
+            redirectURI: `${process.env.REACT_APP_URL}/redirectCreator?link=/home`,
         });
         console.log(idToken);
     };
@@ -154,9 +154,9 @@ const SignUpPage = () => {
             </SignUpHeroSection>
             <SignUpContentSection>
                 <SignUpFormHeading>
-                    Are you a Content Consumer?
+                    Are you a creator?
                     <br />
-                    Join your community
+                    Create your community
                 </SignUpFormHeading>
                 <SignUpGoogleButton onClick={googleLoginHandler}>
                     Sign Up with <GoogleLogo src={googleLogo} />
@@ -195,4 +195,4 @@ const SignUpPage = () => {
     );
 };
 
-export default SignUpPage;
+export default SignUpCreatorPage;

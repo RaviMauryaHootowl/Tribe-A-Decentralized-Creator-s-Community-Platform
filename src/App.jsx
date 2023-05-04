@@ -6,21 +6,46 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { StoreProvider } from "./utils/Store";
 import WagmiProvider from "./utils/WagmiProvider";
 import Redirect from "./pages/Redirect/Redirect";
+import Home from "./pages/Home/Home";
+import Discover from "./pages/Discover/Discover";
+import SignUpCreatorPage from "./pages/SignUp/SignUpCreatorPage";
+import RedirectCreator from "./pages/Redirect/RedirectCreator";
+import Dashboard from "./pages/Dashboard/Dashboard";
 
 const App = () => {
     const router = createBrowserRouter([
+        {
+            path: "/home",
+            element: <Home />,
+        },
+        {
+            path: "/dashboard",
+            element: <Dashboard />,
+        },
         {
             path: "/signup",
             element: <SignUpPage />,
         },
         {
-            path: "/creator",
+            path: "/signupCreator",
+            element: <SignUpCreatorPage />,
+        },
+        {
+            path: "/discover",
+            element: <Discover />,
+        },
+        {
+            path: "/creator/:id",
             element: <CreatorFeed />,
         },
         {
           path: "/redirect",
           element: <Redirect />
-        }
+        },
+        {
+          path: "/redirectCreator",
+          element: <RedirectCreator />
+        },
     ]);
 
     return (

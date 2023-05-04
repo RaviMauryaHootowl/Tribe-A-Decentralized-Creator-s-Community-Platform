@@ -14,12 +14,9 @@ import SettingsSuggestRoundedIcon from "@mui/icons-material/SettingsSuggestRound
 import Modal from "react-modal";
 import { Add, CloseOutlined, UploadFile } from "@mui/icons-material";
 import { StoreContext } from "../../utils/Store";
-import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Magic } from "magic-sdk";
-import { OAuthExtension } from "@magic-ext/oauth";
-import { ethers } from "ethers";
-import { ContractABI, ContractAddress } from "../../utils/constants";
+import Navbar from "../../components/Navbar";
 
 const createProjectModalStyles = {
     content: {
@@ -240,6 +237,29 @@ const FollowBtn = styled.button`
     }
 `;
 
+const HomeNavbar = styled.div`
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 3rem;
+    padding: 0 2rem;
+`;
+
+const PageHeader = styled.div`
+    font-weight: bold;
+    color: #dbdbdb;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+`;
+
+const AccountAddress = styled.div`
+    font-weight: bold;
+    color: #dbdbdb;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+`;
+
 const FeedSection = styled.div`
     width: 100%;
     display: flex;
@@ -385,188 +405,54 @@ const FullFlexDiv = styled.div`
     flex: 1;
 `;
 
-const CreatorFeed = ({match}) => {
-    const params = useParams();
+const CreatorCard = styled.div`
+    padding: 1rem;
+    background-color: #ffd7d7;
+    border-radius: 1rem;
+    margin-bottom: 1rem;
+    color: black;
+    cursor: pointer;
+`;
+
+const Discover = () => {
     const { state, dispatch } = useContext(StoreContext);
-    const [creatorInfo, setCreatorInfo] = useState({});
-    const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] =
-        useState(false);
-    const [isBecomeMemberModalOpen, setIsBecomeMemberModalOpen] =
-        useState(false);
-    const [isVoteModalOpen, setIsVoteModalOpen] =
-        useState(false);
-    const [becomeMemberValue, setBecomeMemberValue] = useState();
-    const [isMember, setIsMember] = useState(false);
+    const navigate = useNavigate();
+    const [creatorsList, setCreatorsList] = useState([]);
 
     useEffect(() => {
         console.log(state.user);
     }, [state.user]);
 
     useEffect(() => {
-        console.log(params.id);
-        fetchCreatorInfo(params.id);
-    }, [params]);
-    
-    const fetchCreatorInfo = async (id) => {
-        try {
-            const res = await axios.get(
-                `${process.env.REACT_APP_API}/user/getCreatorInfo?walletAddress=${id}`
-            );
-            console.log(res.data);
-            const memberFind = res.data.members.find(o => o.emailId == state.user.emailId);
-            if(memberFind){
-                setIsMember(true);
-            }else{
-                setIsMember(false);
-            }
-            setCreatorInfo(res.data);
-        } catch (err) {
-            console.log(err);
-            setCreatorInfo({});
-        }
-    }
+        fetchCreatorsList();
+    }, []);
 
-    const handleBecomeMember = async () => {
-        try{
-            const magic = new Magic(process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY, {
-                network: {
-                  rpcUrl: process.env.REACT_APP_RPC_URL,
-                  chainId: 80001
-                },
-                extensions: [new OAuthExtension()],
-            });
-    
-            console.log(magic);
-        
-            const rpcProvider = new ethers.providers.Web3Provider(magic.rpcProvider);
-            const signer = rpcProvider.getSigner();
-            const contractInstance = new ethers.Contract(
-                ContractAddress,
-                ContractABI,
-                signer
-            );
-            console.log(contractInstance);
-    
-            let resFromSC;
-            const options = {value: ethers.utils.parseEther(`${becomeMemberValue}`)}
-            resFromSC = await contractInstance.Contribute(creatorInfo.walletAddress, options);
-    
-            console.log(resFromSC);
-
-            const res = await axios.post(
-                `${process.env.REACT_APP_API}/user/joinMembership`,
-                {
-                    emailIdCreator: creatorInfo.emailId,
-                    emailId: state.user.emailId
-                }
-            );
-            console.log(res.data);
-            fetchCreatorInfo();
-            alert("Became member");
-        }catch(e){
-            console.log(e);
-            
-        }
-        
-    }
-
-    const castVote = async (isTrue) => {
-        try{
-            const magic = new Magic(process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY, {
-                network: {
-                  rpcUrl: process.env.REACT_APP_RPC_URL,
-                  chainId: 80001
-                },
-                extensions: [new OAuthExtension()],
-            });
-    
-            console.log(magic);
-        
-            const rpcProvider = new ethers.providers.Web3Provider(magic.rpcProvider);
-            const signer = rpcProvider.getSigner();
-            const contractInstance = new ethers.Contract(
-                ContractAddress,
-                ContractABI,
-                signer
-            );
-            console.log(contractInstance);
-    
-            let resFromSC;
-            resFromSC = await contractInstance.vote(creatorInfo.walletAddress, isTrue);
-            resFromSC = await resFromSC.wait();
-            console.log(resFromSC);
-
-            alert("Vote done!");
-        }catch(e){
-            console.log(e);
-            
-        }
-        
-    }
+    const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] =
+        useState(false);
 
     const closeCreateProjectModal = () => {
         setIsCreateProjectModalOpen(false);
-    }
+    };
 
     const openCreateProjectModal = () => {
         setIsCreateProjectModalOpen(true);
-    }
+    };
 
-    const closeBecomeMemberModal = () => {
-        setIsBecomeMemberModalOpen(false);
-    }
-
-    const openBecomeMemberModal = () => {
-        setIsBecomeMemberModalOpen(true);
-    }
-
-    const closeVoteModal = () => {
-        setIsVoteModalOpen(false);
-    }
-
-    const openVoteModal = () => {
-        setIsVoteModalOpen(true);
-    }
-
+    const fetchCreatorsList = async () => {
+        try {
+            const res = await axios.get(
+                `${process.env.REACT_APP_API}/user/getAllCreators`
+            );
+            console.log(res.data);
+            setCreatorsList(res.data);
+        } catch (err) {
+            console.log(err);
+            setCreatorsList([]);
+        }
+    };
 
     return (
         <OuterFrameContainer>
-            <Modal
-                isOpen={isBecomeMemberModalOpen}
-                onRequestClose={closeBecomeMemberModal}
-                style={createProjectModalStyles}
-            >
-                <CreateProjModalContainer>
-                    <ModalHeader>Become Member</ModalHeader>
-                    <TextInputGroup>
-                        <span>Number of Crypts?</span>
-                        <CustomInput
-                            value={becomeMemberValue}
-                            onChange={(e) => {setBecomeMemberValue(e.target.value)}}
-                            type="number"
-                            name=""
-                            id=""
-                            placeholder="1 Crypt = 10₹"
-                        />
-                    </TextInputGroup>
-                    <CreateProjModalBottom>
-                        <BecomeMemberBtn onClick={handleBecomeMember}>Join</BecomeMemberBtn>
-                    </CreateProjModalBottom>
-                </CreateProjModalContainer>
-            </Modal>
-            <Modal
-                isOpen={isVoteModalOpen}
-                onRequestClose={closeVoteModal}
-                style={createProjectModalStyles}
-            >
-                <CreateProjModalContainer>
-                    <ModalHeader>Cast Vote</ModalHeader>
-                    <CreateProjModalBottom>
-                        <BecomeMemberBtn onClick={() => {castVote(true)}}>Vote Yes</BecomeMemberBtn>
-                        <BecomeMemberBtn onClick={() => {castVote(false)}}>Vote No</BecomeMemberBtn>
-                    </CreateProjModalBottom>
-                </CreateProjModalContainer>
-            </Modal>
             <Modal
                 isOpen={isCreateProjectModalOpen}
                 onRequestClose={closeCreateProjectModal}
@@ -594,12 +480,7 @@ const CreatorFeed = ({match}) => {
                     </TextInputGroup>
                     <TextInputGroup>
                         <span>Project Cover Image</span>
-                        <CustomInput
-                            type="text"
-                            name=""
-                            id=""
-                            placeholder=""
-                        />
+                        <CustomInput type="text" name="" id="" placeholder="" />
                     </TextInputGroup>
                     <CreateProjModalBottom>
                         <FullFlexDiv>
@@ -619,7 +500,11 @@ const CreatorFeed = ({match}) => {
             </Modal>
             <SideBarMenu>
                 <AppLogo src={logo} />
-                <SideOptionCard>
+                <SideOptionCard
+                    onClick={() => {
+                        navigate("/home");
+                    }}
+                >
                     <HomeRoundedIcon />
                     <span>Home</span>
                 </SideOptionCard>
@@ -641,83 +526,17 @@ const CreatorFeed = ({match}) => {
                 </SideOptionCard>
             </SideBarMenu>
             <CreatorPageContainer>
-                <CoverImageContainer>
-                    <CoverTopActions></CoverTopActions>
-                    <CoverCreatorInfoContainer>
-                        <ProfilePicContainer>
-                            <ProfilePic src={dp} />
-                        </ProfilePicContainer>
-                        <InfoContainer>
-                            <CoverCreatorName>{creatorInfo.fullName ? creatorInfo.fullName.substring(10, 20) : "-"}...</CoverCreatorName>
-                            <CoverStatsContainer>
-                                <CoverStat>612 members</CoverStat>
-                                <CoverStat>1.5K followers</CoverStat>
-                            </CoverStatsContainer>
-                        </InfoContainer>
-                        <CoverMilestoneStat>
-                            <MilestoneMeter>
-                                <FilledMeter></FilledMeter>
-                            </MilestoneMeter>
-                            3rd Milestone
-                        </CoverMilestoneStat>
-                    </CoverCreatorInfoContainer>
-                </CoverImageContainer>
+                <Navbar title={"DISCOVER CREATORS"} />
                 <FeedContainer>
-                    <TopFeedActionsContainer>
-                        <BlankSpace></BlankSpace>
-                        {
-                            isMember ? <></> : 
-                            <BecomeMemberBtn onClick={openBecomeMemberModal}>Become a Member</BecomeMemberBtn>
-                        }
-                        <FollowBtn>Follow</FollowBtn>
-                        <FollowBtn onClick={openVoteModal}>Vote</FollowBtn>
-                    </TopFeedActionsContainer>
-                    <FeedSection>
-                        <SectionHeader>MY STORY</SectionHeader>
-                        <StoryText>
-                            I released my first single, entitled "Baarishein" in
-                            2016 on my own YouTube channel. The track has since
-                            amassed over 38 million views on the platform. The
-                            song later released officially on music streaming
-                            platforms in 2018, since then I have released 8 more
-                            singles, my latest being Meri Baaton Mein Tu
-                            released in 2022 and has been dedicated by my close
-                            friend Shlok to a special someone.
-                        </StoryText>
-                    </FeedSection>
-                    <FeedSection>
-                        <SectionHeader>MY WORK</SectionHeader>
-                        <WorkListContainer>
-                            <WorkCard>
-                                <img src={spotify} alt="" />
-                                Spotify
-                            </WorkCard>
-                            <WorkCard>
-                                <img src={youtube} alt="" />
-                                YouTube
-                            </WorkCard>
-                        </WorkListContainer>
-                    </FeedSection>
-                    <FeedSection>
-                        <SectionHeader>
-                            <span>PROJECTS</span>
-                            <SectionHeaderActionBtn onClick={openCreateProjectModal}><Add /> Create Project</SectionHeaderActionBtn>
-                        </SectionHeader>
-                        <WorkListContainer>
-                            <ProjectsCard>
-                                <img src={music} alt="" />
-                                <span>My 9th Single: Untitled</span>
-                            </ProjectsCard>
-                            <ProjectsCard>
-                                <img src={music} alt="" />
-                                <span>8th Single: A song</span>
-                            </ProjectsCard>
-                        </WorkListContainer>
-                    </FeedSection>
+                    {creatorsList.map((creator, index) => {
+                        return <CreatorCard onClick={() => {
+                            navigate(`/creator/${creator.walletAddress}`)
+                        }}>{creator.fullName}</CreatorCard>;
+                    })}
                 </FeedContainer>
             </CreatorPageContainer>
         </OuterFrameContainer>
     );
 };
 
-export default CreatorFeed;
+export default Discover;

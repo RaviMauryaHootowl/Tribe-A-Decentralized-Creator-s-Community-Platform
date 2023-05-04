@@ -6,7 +6,7 @@ import { magicLogin } from "../../utils/user";
 import { useNavigate } from "react-router-dom";
 
 
-const Redirect = () => {
+const RedirectCreator = () => {
     const navigate = useNavigate();
     const { state, dispatch } = useContext(StoreContext);
     const [userInfo, setUserInfo] = useState(null);
@@ -39,7 +39,7 @@ const Redirect = () => {
 
     const login = async () => {
         if (!did) return;
-        const loginSuccess = await magicLogin(state, dispatch, did, userInfo, false);
+        const loginSuccess = await magicLogin(state, dispatch, did, userInfo, true);
         if (loginSuccess) {
             navigate('/home');
         } else {
@@ -56,4 +56,4 @@ const Redirect = () => {
     )
 }
 
-export default Redirect;
+export default RedirectCreator;

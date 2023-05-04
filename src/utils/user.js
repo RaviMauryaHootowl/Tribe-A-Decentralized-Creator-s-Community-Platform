@@ -4,6 +4,9 @@ import notify from './notify';
 import { notifyPromise, notifyResolve } from './notify';
 import { ethers } from 'ethers';
 import { validateEmail } from './utils';
+import { Magic } from 'magic-sdk';
+import { ContractABI, ContractAddress } from './constants';
+import { OAuthExtension } from '@magic-ext/oauth';
 
 export const logoutHandler = (dispatch) => {
     console.log('Loggin out');
@@ -132,15 +135,48 @@ export const connectToMetamask = async (dispatch) => {
     }
 };
 
-export const magicLogin = async (state, dispatch, did, userInfo) => {
+export const magicLogin = async (state, dispatch, did, userInfo, isCreator) => {
     console.log('magic loggin in', did, userInfo);
     const notifyId = notifyPromise('Hashcase Wallet Logging in...', 'info');
     try {
-        const userBackend = await axios.post(`${process.env.REACT_APP_API}/user/magicLogin`, {
+        const API_URL_SUFFIX = isCreator ? 'magicLoginCreator' : 'magicLoginUser';
+        const userBackend = await axios.post(`${process.env.REACT_APP_API}/user/${API_URL_SUFFIX}`, {
             didToken: did,
             userInfo
         });
         console.log(userBackend);
+
+        // also register on smart contract
+        console.log("Registering on SC");
+        const magic = new Magic(process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY, {
+            network: {
+              rpcUrl: process.env.REACT_APP_RPC_URL,
+              chainId: 80001
+            },
+            extensions: [new OAuthExtension()],
+          });
+
+          console.log(magic);
+    
+        const rpcProvider = new ethers.providers.Web3Provider(magic.rpcProvider);
+        const signer = rpcProvider.getSigner();
+        const contractInstance = new ethers.Contract(
+            ContractAddress,
+            ContractABI,
+            signer
+        );
+        console.log(contractInstance);
+
+        let resFromSC;
+        if(isCreator){
+            resFromSC = await contractInstance.RegisterCreator("Creator name", "youtube", 1000);
+        }else{
+            resFromSC = await contractInstance.RegisterContributor("Contributor name");
+        }
+
+        console.log(resFromSC);
+
+
         const inThirtyMins = new Date(new Date().getTime() + 30 * 60 * 1000);
 
         dispatch({
@@ -157,7 +193,7 @@ export const magicLogin = async (state, dispatch, did, userInfo) => {
         });
         Cookies.set('jwt', userBackend.data.token);
         if (userBackend.data.isNewUser) {
-            notifyResolve(notifyId, 'Welcome to HashCase!', 'success');
+            notifyResolve(notifyId, 'Welcome to Creators Community!', 'success');
         } else {
             notifyResolve(notifyId, 'Logged in!', 'success');
         }
