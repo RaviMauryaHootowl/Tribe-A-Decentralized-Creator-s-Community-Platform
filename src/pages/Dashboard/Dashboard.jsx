@@ -489,6 +489,32 @@ const Dashboard = () => {
         setIsCreatorSetupModalOpen(true);
     }
 
+    const getVotingStatus = async () => {
+        const magic = new Magic(process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY, {
+            network: {
+              rpcUrl: process.env.REACT_APP_RPC_URL,
+              chainId: 80001
+            },
+            extensions: [new OAuthExtension()],
+        });
+
+        console.log(magic);
+    
+        const rpcProvider = new ethers.providers.Web3Provider(magic.rpcProvider);
+        const signer = rpcProvider.getSigner();
+        const contractInstance = new ethers.Contract(
+            ContractAddress,
+            ContractABI,
+            signer
+        );
+        console.log(contractInstance);
+
+        let resFromSC;
+        resFromSC = await contractInstance.getVotingStatus(state.user.walletAddress);
+
+        console.log(resFromSC);
+    }
+
     const initiateVotingForRequest = async () => {
         const magic = new Magic(process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY, {
             network: {
@@ -681,6 +707,7 @@ const Dashboard = () => {
 
 
                     
+                    <BecomeMemberBtn onClick={getVotingStatus}>View Votes</BecomeMemberBtn>
                     <BecomeMemberBtn onClick={openCreateProjectModal}>Request Funds</BecomeMemberBtn>
                     <BecomeMemberBtn onClick={handleCloseVotes}>Close Votes & Transfer</BecomeMemberBtn>
                     

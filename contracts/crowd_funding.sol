@@ -274,6 +274,16 @@ contract crowd_funding {
         ] += 1 * idToCreators[creatorId].totalFundRaised;
     }
 
+    function getVotingStatus(address creatorAddress) public view returns(bool, uint256, uint256, uint256, uint256){
+        uint256 creatorId = creatorsAddressToID[creatorAddress];
+        Creator storage creator = idToCreators[creatorId];
+
+        VotingVenture storage currentVoting = creator.idToVotingVenture[
+            idToCreators[creatorId].noOfVotingVentures - 1
+        ];
+        return (currentVoting.isVentureActive, currentVoting.noOfVoters, currentVoting.upScore, currentVoting.downScore, currentVoting.amount);
+    }
+
     function endVoting() public {
         uint256 creatorId = creatorsAddressToID[msg.sender];
         Creator storage creator = idToCreators[creatorId];

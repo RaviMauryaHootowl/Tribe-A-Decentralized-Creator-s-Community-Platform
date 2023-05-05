@@ -114,7 +114,12 @@ exports.magicLoginCreator = async (req, res) => {
 exports.getAllCreators = async (req, res) => {
     try{
         const creatorsList = await User.find({isCreator: true});
-        return res.send(creatorsList);
+        const updatedCreatorList = [];
+        for(let i = 0; i < creatorsList.length; i++){
+            const creatorInfo = await Creator.findOne({emailId: creatorsList[i].emailId});
+            updatedCreatorList.push({...(creatorsList[i].toObject()), ...(creatorInfo.toObject())})
+        }
+        return res.send(updatedCreatorList);
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: error });
