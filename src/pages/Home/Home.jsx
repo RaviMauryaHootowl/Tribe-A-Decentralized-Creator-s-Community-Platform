@@ -16,6 +16,7 @@ import { Add, CloseOutlined, UploadFile } from "@mui/icons-material";
 import { StoreContext } from "../../utils/Store";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
+import Sidebar from "../../components/Sidebar";
 
 const createProjectModalStyles = {
     content: {
@@ -475,33 +476,7 @@ const Home = () => {
                     </CreateProjModalBottom>
                 </CreateProjModalContainer>
             </Modal>
-            <SideBarMenu>
-                <AppLogo src={logo} />
-                <SideOptionCard onClick={() => {
-                    navigate("/home");
-                }}>
-                    <HomeRoundedIcon />
-                    <span>Home</span>
-                </SideOptionCard>
-                <SideOptionCard onClick={() => {
-                    navigate("/discover");
-                }}>
-                    <TravelExploreRoundedIcon />
-                    <span>Discover</span>
-                </SideOptionCard>
-                <SideOptionCard>
-                    <LocalFireDepartmentRoundedIcon />
-                    <span>Crypts</span>
-                </SideOptionCard>
-                <SideOptionCard>
-                    <AccountCircleRoundedIcon />
-                    <span>Account</span>
-                </SideOptionCard>
-                <SideOptionCard>
-                    <SettingsSuggestRoundedIcon />
-                    <span>Settings</span>
-                </SideOptionCard>
-            </SideBarMenu>
+            <Sidebar />
             <CreatorPageContainer>
                 <Navbar title={"HOME"} />
                 <FeedContainer>

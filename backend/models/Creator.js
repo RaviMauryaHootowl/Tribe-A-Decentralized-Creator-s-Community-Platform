@@ -12,6 +12,9 @@ const creatorSchema = new Schema({
     description: {
         type: String
     },
+    socialUrl: {
+        type: String
+    },
     isVotingLive: {
         type: Boolean,
         default: false

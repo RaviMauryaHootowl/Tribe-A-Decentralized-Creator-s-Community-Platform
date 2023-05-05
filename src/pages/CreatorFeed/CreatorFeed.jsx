@@ -1,16 +1,10 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
-import logo from "../../images/logo.svg";
 import cover from "../../images/cover.png";
 import dp from "../../images/dp.png";
 import spotify from "../../images/spotify.png";
 import youtube from "../../images/youtube.png";
 import music from "../../images/musicImage.png";
-import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
-import TravelExploreRoundedIcon from "@mui/icons-material/TravelExploreRounded";
-import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
-import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
-import SettingsSuggestRoundedIcon from "@mui/icons-material/SettingsSuggestRounded";
 import Modal from "react-modal";
 import { Add, CloseOutlined, UploadFile } from "@mui/icons-material";
 import { StoreContext } from "../../utils/Store";
@@ -20,6 +14,7 @@ import { Magic } from "magic-sdk";
 import { OAuthExtension } from "@magic-ext/oauth";
 import { ethers } from "ethers";
 import { ContractABI, ContractAddress } from "../../utils/constants";
+import Sidebar from "../../components/Sidebar";
 
 const createProjectModalStyles = {
     content: {
@@ -617,38 +612,16 @@ const CreatorFeed = ({match}) => {
                     </CreateProjModalBottom>
                 </CreateProjModalContainer>
             </Modal>
-            <SideBarMenu>
-                <AppLogo src={logo} />
-                <SideOptionCard>
-                    <HomeRoundedIcon />
-                    <span>Home</span>
-                </SideOptionCard>
-                <SideOptionCard>
-                    <TravelExploreRoundedIcon />
-                    <span>Discover</span>
-                </SideOptionCard>
-                <SideOptionCard>
-                    <LocalFireDepartmentRoundedIcon />
-                    <span>Crypts</span>
-                </SideOptionCard>
-                <SideOptionCard>
-                    <AccountCircleRoundedIcon />
-                    <span>Account</span>
-                </SideOptionCard>
-                <SideOptionCard>
-                    <SettingsSuggestRoundedIcon />
-                    <span>Settings</span>
-                </SideOptionCard>
-            </SideBarMenu>
+            <Sidebar />
             <CreatorPageContainer>
                 <CoverImageContainer>
                     <CoverTopActions></CoverTopActions>
                     <CoverCreatorInfoContainer>
                         <ProfilePicContainer>
-                            <ProfilePic src={dp} />
+                            <ProfilePic src={creatorInfo.profilePic} />
                         </ProfilePicContainer>
                         <InfoContainer>
-                            <CoverCreatorName>{creatorInfo.fullName ? creatorInfo.fullName.substring(10, 20) : "-"}...</CoverCreatorName>
+                            <CoverCreatorName>{creatorInfo.fullName}</CoverCreatorName>
                             <CoverStatsContainer>
                                 <CoverStat>612 members</CoverStat>
                                 <CoverStat>1.5K followers</CoverStat>
@@ -669,33 +642,24 @@ const CreatorFeed = ({match}) => {
                             isMember ? <></> : 
                             <BecomeMemberBtn onClick={openBecomeMemberModal}>Become a Member</BecomeMemberBtn>
                         }
-                        <FollowBtn>Follow</FollowBtn>
+                        {/* <FollowBtn>Follow</FollowBtn> */}
                         <FollowBtn onClick={openVoteModal}>Vote</FollowBtn>
                     </TopFeedActionsContainer>
                     <FeedSection>
                         <SectionHeader>MY STORY</SectionHeader>
                         <StoryText>
-                            I released my first single, entitled "Baarishein" in
-                            2016 on my own YouTube channel. The track has since
-                            amassed over 38 million views on the platform. The
-                            song later released officially on music streaming
-                            platforms in 2018, since then I have released 8 more
-                            singles, my latest being Meri Baaton Mein Tu
-                            released in 2022 and has been dedicated by my close
-                            friend Shlok to a special someone.
+                            {creatorInfo.description}
                         </StoryText>
                     </FeedSection>
                     <FeedSection>
                         <SectionHeader>MY WORK</SectionHeader>
                         <WorkListContainer>
-                            <WorkCard>
-                                <img src={spotify} alt="" />
-                                Spotify
-                            </WorkCard>
-                            <WorkCard>
-                                <img src={youtube} alt="" />
-                                YouTube
-                            </WorkCard>
+                            <a href={creatorInfo.socialUrl} target="_blank" rel="noopener noreferrer">
+                                <WorkCard>
+                                    <img src={spotify} alt="" />
+                                    Website
+                                </WorkCard>
+                            </a>
                         </WorkListContainer>
                     </FeedSection>
                     <FeedSection>

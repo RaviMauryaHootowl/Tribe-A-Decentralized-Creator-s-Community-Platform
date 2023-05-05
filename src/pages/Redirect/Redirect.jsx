@@ -44,7 +44,7 @@ const Redirect = () => {
             navigate('/home');
         } else {
             console.log('login failed')
-            navigate('/home');
+            navigate('/signup');
         }
     }
 

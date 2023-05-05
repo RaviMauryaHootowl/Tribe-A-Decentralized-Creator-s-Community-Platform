@@ -121,6 +121,32 @@ exports.getAllCreators = async (req, res) => {
     }
 }
 
+exports.setCreatorInfo = async (req, res) => {
+    try{
+        const {emailId, name, description, profilePic, socialUrl} = req.body;
+        console.log(emailId);
+        const userInfo = await User.findOne({emailId});
+        if(!userInfo){
+            return res.status(404).json({message: "User does not exists"});
+        }
+        await User.findOneAndUpdate(
+            {emailId},
+            {fullName: name}
+        ).exec();
+        await Creator.findOneAndUpdate(
+            {emailId},
+            {description, profilePic, socialUrl}
+        ).exec();
+
+        const updatedUserInfo = await User.findOne({emailId});
+        const updatedCreatorInfo = await Creator.findOne({emailId});
+        return res.send({...(updatedUserInfo.toObject()), ...(updatedCreatorInfo.toObject())});
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error });
+    }
+}
+
 exports.getCreatorInfo = async (req, res) => {
     try{
         const {walletAddress} = req.query;
