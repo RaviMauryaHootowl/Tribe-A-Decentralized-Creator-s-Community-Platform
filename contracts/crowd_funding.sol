@@ -139,7 +139,7 @@ contract crowd_funding {
         contributor.claimableAmount = 0;
     }
 
-    function Contribute(address creatorAddress) public payable {
+    function contribute(address creatorAddress) public payable {
         require(msg.value > 0, "Gareeb?");
 
         uint256 amount = msg.value;
@@ -274,9 +274,10 @@ contract crowd_funding {
         ] += 1 * idToCreators[creatorId].totalFundRaised;
     }
 
-    function getMyVotingVentureResult() public returns (bool) {
+    function endVoting() public {
         uint256 creatorId = creatorsAddressToID[msg.sender];
         Creator storage creator = idToCreators[creatorId];
+
         VotingVenture storage currentVoting = creator.idToVotingVenture[
             idToCreators[creatorId].noOfVotingVentures - 1
         ];
@@ -284,16 +285,14 @@ contract crowd_funding {
         require(currentVoting.isVentureActive, "No active venture");
 
         require(
-            currentVoting.noOfVoters * 2 > creator.noOfContributors,
+            currentVoting.noOfVoters > (creator.noOfContributors / 2),
             "Not enough voters"
         );
 
         if (currentVoting.upScore > currentVoting.downScore) {
             creator.claimAmount += currentVoting.amount;
-            currentVoting.isVentureActive = false;
-            return true;
         }
-        return false;
+        currentVoting.isVentureActive = false;
     }
 
     function claimAmountForCreator() public payable {
@@ -321,5 +320,22 @@ contract crowd_funding {
         uint256 creatorId
     ) public view returns (uint256) {
         return idToCreators[creatorId].noOfMilestones;
+    }
+
+    function getContributorClaimableBalance()public view returns (uint256){
+
+        uint256 contributorId = contributorsAddressToID[msg.sender];
+        return idToContributor[contributorId].claimableAmount;
+    }
+
+    function getMilestoneDetails(address creatorAddress)public view returns (uint256 goal,uint256 fundsRaised, uint256 milestoneNo ){
+
+        uint256 creatorId = creatorsAddressToID[creatorAddress];
+        Creator storage creator = idToCreators[creatorId];
+        milestoneNo = creator.noOfMilestones;
+        goal = creator.currentActiveMilestone.goal;
+        fundsRaised = creator.currentActiveMilestone.fundRaised;
+
+        return (goal,fundsRaised,milestoneNo);
     }
 }
