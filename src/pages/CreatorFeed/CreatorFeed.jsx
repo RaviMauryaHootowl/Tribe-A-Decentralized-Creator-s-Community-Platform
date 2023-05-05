@@ -392,6 +392,7 @@ const CreatorFeed = ({match}) => {
         useState(false);
     const [becomeMemberValue, setBecomeMemberValue] = useState();
     const [isMember, setIsMember] = useState(false);
+    const [milestoneInfo, setMilestoneInfo] = useState({});
 
     useEffect(() => {
         console.log(state.user);
@@ -401,6 +402,10 @@ const CreatorFeed = ({match}) => {
         console.log(params.id);
         fetchCreatorInfo(params.id);
     }, [params]);
+
+    useEffect(() => {
+        console.log(milestoneInfo);
+    }, [milestoneInfo])
     
     const fetchCreatorInfo = async (id) => {
         try {
@@ -415,6 +420,7 @@ const CreatorFeed = ({match}) => {
                 setIsMember(false);
             }
             setCreatorInfo(res.data);
+            getMilestoneDetails(res.data.walletAddress);
         } catch (err) {
             console.log(err);
             setCreatorInfo({});
@@ -444,7 +450,7 @@ const CreatorFeed = ({match}) => {
     
             let resFromSC;
             const options = {value: ethers.utils.parseEther(`${becomeMemberValue}`)}
-            resFromSC = await contractInstance.Contribute(creatorInfo.walletAddress, options);
+            resFromSC = await contractInstance.contribute(creatorInfo.walletAddress, options);
     
             console.log(resFromSC);
 
@@ -463,6 +469,40 @@ const CreatorFeed = ({match}) => {
             
         }
         
+    }
+
+    const getMilestoneDetails = async (creatorWalletAddress) => {
+        try{
+            const magic = new Magic(process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY, {
+                network: {
+                  rpcUrl: process.env.REACT_APP_RPC_URL,
+                  chainId: 80001
+                },
+                extensions: [new OAuthExtension()],
+            });
+    
+            console.log(magic);
+        
+            const rpcProvider = new ethers.providers.Web3Provider(magic.rpcProvider);
+            const signer = rpcProvider.getSigner();
+            const contractInstance = new ethers.Contract(
+                ContractAddress,
+                ContractABI,
+                signer
+            );
+            console.log(contractInstance);
+    
+            let resFromSC;
+            resFromSC = await contractInstance.getMilestoneDetails(creatorWalletAddress);
+
+            setMilestoneInfo({
+                milestoneNum : resFromSC.milestoneNo.toString(),
+                goal: resFromSC.goal.toString(),
+                fundsRaised: resFromSC.fundsRaised.toString()
+            });
+        }catch(e){
+            console.log(e);
+        }
     }
 
     const castVote = async (isTrue) => {
