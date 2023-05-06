@@ -20,6 +20,9 @@ import { Magic } from "magic-sdk";
 import { OAuthExtension } from "@magic-ext/oauth";
 import { ethers } from "ethers";
 import { ContractABI, ContractAddress } from "../../utils/constants";
+import Sidebar from "../../components/Sidebar";
+import { isValid } from "../../utils/utils";
+import axios from "axios";
 
 const createProjectModalStyles = {
     content: {
@@ -409,10 +412,56 @@ const FullFlexDiv = styled.div`
     flex: 1;
 `;
 
+const SetupMessageContainer = styled.div`
+    width: 100%;
+    padding: 0 2rem;
+    margin-top: 1rem;
+`;
+
+const SetupMessageBox = styled.div`
+    width: 100%;
+    border-radius: 8px;
+    background-color: #3a3a3a;
+    color: white;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+`;
+
+const SetupMessageBtn = styled.button`
+    margin-left: 1rem;
+    background-color: #2e72f6;
+    color: white;
+    border: none;
+    outline: none;
+    border-bottom: #1e5ed9 6px solid;
+    padding: 0.8rem 2rem;
+    border-radius: 0.5rem;
+    font-size: 1.1rem;
+    /* margin-top: 2rem; */
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.5s ease;
+    &:hover {
+        transform: translateY(-2px);
+    }
+    &:active {
+        transition: all 0.1s ease;
+        transform: translateY(4px);
+    }
+`;
+
 const Dashboard = () => {
     const { state, dispatch } = useContext(StoreContext);
     const navigate = useNavigate();
     const [requestAmount, setRequestAmount] = useState("");
+    const [cdName, setCdName] = useState("");
+    const [cdDesc, setCdDesc] = useState("");
+    const [cdProfilePicURL, setCdProfilePicURL] = useState("");
+    const [cdSocialURL, setCdSocialURL] = useState("");
+    const [cdMilestone, setCdMilestone] = useState("");
 
     useEffect(() => {
         console.log(state.user);
@@ -421,12 +470,49 @@ const Dashboard = () => {
     const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] =
         useState(false);
 
+    const [isCreatorSetupModalOpen, setIsCreatorSetupModalOpen] =
+        useState(false);
+
     const closeCreateProjectModal = () => {
         setIsCreateProjectModalOpen(false);
     }
 
     const openCreateProjectModal = () => {
         setIsCreateProjectModalOpen(true);
+    }
+
+    const closeCreatorSetupModal = () => {
+        setIsCreatorSetupModalOpen(false);
+    }
+
+    const openCreatorSetupModal = () => {
+        setIsCreatorSetupModalOpen(true);
+    }
+
+    const getVotingStatus = async () => {
+        const magic = new Magic(process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY, {
+            network: {
+              rpcUrl: process.env.REACT_APP_RPC_URL,
+              chainId: 80001
+            },
+            extensions: [new OAuthExtension()],
+        });
+
+        console.log(magic);
+    
+        const rpcProvider = new ethers.providers.Web3Provider(magic.rpcProvider);
+        const signer = rpcProvider.getSigner();
+        const contractInstance = new ethers.Contract(
+            ContractAddress,
+            ContractABI,
+            signer
+        );
+        console.log(contractInstance);
+
+        let resFromSC;
+        resFromSC = await contractInstance.getVotingStatus(state.user.walletAddress);
+
+        console.log(resFromSC);
     }
 
     const initiateVotingForRequest = async () => {
@@ -485,8 +571,83 @@ const Dashboard = () => {
         console.log(resFromSC);
     }
 
+    const saveCreatorDetails = async () => {
+        if(isValid(cdName) && isValid(cdDesc) && isValid(cdProfilePicURL) && isValid(cdSocialURL) && isValid(cdMilestone)){
+            const res = await axios.post(
+                `${process.env.REACT_APP_API}/user/setCreatorInfo`,
+                {
+                    emailId: state.user.emailId,
+                    name: cdName,
+                    description: cdDesc,
+                    profilePic: cdProfilePicURL,
+                    socialUrl: cdSocialURL
+                }
+            );
+            console.log(res.data);
+        }else{
+            alert("Fill all the details first");
+        }
+    }
+
     return (
         <OuterFrameContainer>
+            <Modal
+                isOpen={isCreatorSetupModalOpen}
+                onRequestClose={closeCreatorSetupModal}
+                style={createProjectModalStyles}
+            >
+                <CreateProjModalContainer>
+                    <ModalHeader>Creator Setup</ModalHeader>
+                    <TextInputGroup>
+                        <span>Your Name</span>
+                        <CustomInput
+                            value={cdName}
+                            onChange={(e) => {setCdName(e.target.value)}}
+                            type="text"
+                            placeholder="Creator Name"
+                        />
+                    </TextInputGroup>
+                    <TextInputGroup>
+                        <span>Your work Description</span>
+                        <CustomInput
+                            value={cdDesc}
+                            onChange={(e) => {setCdDesc(e.target.value)}}
+                            type="text"
+                            placeholder="Describe your work"
+                        />
+                    </TextInputGroup>
+                    <TextInputGroup>
+                        <span>Profile Picture URL</span>
+                        <CustomInput
+                            value={cdProfilePicURL}
+                            onChange={(e) => {setCdProfilePicURL(e.target.value)}}
+                            type="text"
+                            placeholder="www.asdf.com/imageurl"
+                        />
+                    </TextInputGroup>
+                    <TextInputGroup>
+                        <span>Social Media URL</span>
+                        <CustomInput
+                            value={cdSocialURL}
+                            onChange={(e) => {setCdSocialURL(e.target.value)}}
+                            type="text"
+                            placeholder="Instagram/YouTube/Spotify"
+                        />
+                    </TextInputGroup>
+                    <TextInputGroup>
+                        <span>Milestone Goal (Recommended: 100)</span>
+                        <CustomInput
+                            value={cdMilestone}
+                            onChange={(e) => {setCdMilestone(e.target.value)}}
+                            type="number"
+                            placeholder="Number of Crypts for Milestone"
+                        />
+                    </TextInputGroup>
+                    <CreateProjModalBottom>
+                        <BecomeMemberBtn onClick={saveCreatorDetails}>Save</BecomeMemberBtn>
+                    </CreateProjModalBottom>
+                </CreateProjModalContainer>
+            </Modal>
             <Modal
                 isOpen={isCreateProjectModalOpen}
                 onRequestClose={closeCreateProjectModal}
@@ -530,37 +691,23 @@ const Dashboard = () => {
                     </CreateProjModalBottom>
                 </CreateProjModalContainer>
             </Modal>
-            <SideBarMenu>
-                <AppLogo src={logo} />
-                <SideOptionCard onClick={() => {
-                    navigate("/home");
-                }}>
-                    <HomeRoundedIcon />
-                    <span>Home</span>
-                </SideOptionCard>
-                <SideOptionCard onClick={() => {
-                    navigate("/discover");
-                }}>
-                    <TravelExploreRoundedIcon />
-                    <span>Discover</span>
-                </SideOptionCard>
-                <SideOptionCard>
-                    <LocalFireDepartmentRoundedIcon />
-                    <span>Crypts</span>
-                </SideOptionCard>
-                <SideOptionCard>
-                    <AccountCircleRoundedIcon />
-                    <span>Account</span>
-                </SideOptionCard>
-                <SideOptionCard>
-                    <SettingsSuggestRoundedIcon />
-                    <span>Settings</span>
-                </SideOptionCard>
-            </SideBarMenu>
+            <Sidebar />
             <CreatorPageContainer>
-                <Navbar title={"HOME"} />
+                <Navbar title={"DASHBOARD"} />
+
+                <SetupMessageContainer>
+                    <SetupMessageBox>
+                        <span>
+                            Hey there, your first step would be to setup your account with some basic details!
+                        </span>
+                        <SetupMessageBtn onClick={openCreatorSetupModal}>SETUP</SetupMessageBtn>
+                    </SetupMessageBox>
+                </SetupMessageContainer>
                 <FeedContainer>
+
+
                     
+                    <BecomeMemberBtn onClick={getVotingStatus}>View Votes</BecomeMemberBtn>
                     <BecomeMemberBtn onClick={openCreateProjectModal}>Request Funds</BecomeMemberBtn>
                     <BecomeMemberBtn onClick={handleCloseVotes}>Close Votes & Transfer</BecomeMemberBtn>
                     

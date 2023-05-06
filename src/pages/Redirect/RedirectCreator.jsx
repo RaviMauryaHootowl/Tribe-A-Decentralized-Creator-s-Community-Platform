@@ -41,10 +41,10 @@ const RedirectCreator = () => {
         if (!did) return;
         const loginSuccess = await magicLogin(state, dispatch, did, userInfo, true);
         if (loginSuccess) {
-            navigate('/home');
+            navigate('/dashboard');
         } else {
             console.log('login failed')
-            navigate('/home');
+            navigate('/signupCreator');
         }
     }
 
