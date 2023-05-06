@@ -166,7 +166,7 @@ const MilestoneMeter = styled.div`
 `;
 
 const FilledMeter = styled.div`
-    width: 70%;
+    width: ${props => props.percent}%;
     background-color: #1e5ed9;
 `;
 
@@ -462,7 +462,8 @@ const CreatorFeed = ({match}) => {
                 }
             );
             console.log(res.data);
-            fetchCreatorInfo();
+            closeBecomeMemberModal();
+            fetchCreatorInfo(params.id);
             alert("Became member");
         }catch(e){
             console.log(e);
@@ -667,12 +668,15 @@ const CreatorFeed = ({match}) => {
                                 <CoverStat>1.5K followers</CoverStat>
                             </CoverStatsContainer>
                         </InfoContainer>
-                        <CoverMilestoneStat>
+                        {
+                            milestoneInfo.goal && <CoverMilestoneStat>
                             <MilestoneMeter>
-                                <FilledMeter></FilledMeter>
+                                <FilledMeter percent={parseInt(milestoneInfo.fundsRaised) * 100 / parseInt(milestoneInfo.goal)}></FilledMeter>
                             </MilestoneMeter>
-                            3rd Milestone
+                            Milestone: {milestoneInfo.milestoneNum}
                         </CoverMilestoneStat>
+                        }
+                        
                     </CoverCreatorInfoContainer>
                 </CoverImageContainer>
                 <FeedContainer>

@@ -248,7 +248,7 @@ const HomeNavbar = styled.div`
     width: 100%;
     display: flex;
     justify-content: space-between;
-    align-items:center;
+    align-items: center;
     margin-top: 3rem;
     padding: 0 2rem;
 `;
@@ -475,32 +475,37 @@ const Dashboard = () => {
 
     const closeCreateProjectModal = () => {
         setIsCreateProjectModalOpen(false);
-    }
+    };
 
     const openCreateProjectModal = () => {
         setIsCreateProjectModalOpen(true);
-    }
+    };
 
     const closeCreatorSetupModal = () => {
         setIsCreatorSetupModalOpen(false);
-    }
+    };
 
     const openCreatorSetupModal = () => {
         setIsCreatorSetupModalOpen(true);
-    }
+    };
 
     const getVotingStatus = async () => {
-        const magic = new Magic(process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY, {
-            network: {
-              rpcUrl: process.env.REACT_APP_RPC_URL,
-              chainId: 80001
-            },
-            extensions: [new OAuthExtension()],
-        });
+        const magic = new Magic(
+            process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
+            {
+                network: {
+                    rpcUrl: process.env.REACT_APP_RPC_URL,
+                    chainId: 80001,
+                },
+                extensions: [new OAuthExtension()],
+            }
+        );
 
         console.log(magic);
-    
-        const rpcProvider = new ethers.providers.Web3Provider(magic.rpcProvider);
+
+        const rpcProvider = new ethers.providers.Web3Provider(
+            magic.rpcProvider
+        );
         const signer = rpcProvider.getSigner();
         const contractInstance = new ethers.Contract(
             ContractAddress,
@@ -510,23 +515,30 @@ const Dashboard = () => {
         console.log(contractInstance);
 
         let resFromSC;
-        resFromSC = await contractInstance.getVotingStatus(state.user.walletAddress);
+        resFromSC = await contractInstance.getVotingStatus(
+            state.user.walletAddress
+        );
 
         console.log(resFromSC);
-    }
+    };
 
     const initiateVotingForRequest = async () => {
-        const magic = new Magic(process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY, {
-            network: {
-              rpcUrl: process.env.REACT_APP_RPC_URL,
-              chainId: 80001
-            },
-            extensions: [new OAuthExtension()],
-        });
+        const magic = new Magic(
+            process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
+            {
+                network: {
+                    rpcUrl: process.env.REACT_APP_RPC_URL,
+                    chainId: 80001,
+                },
+                extensions: [new OAuthExtension()],
+            }
+        );
 
         console.log(magic);
-    
-        const rpcProvider = new ethers.providers.Web3Provider(magic.rpcProvider);
+
+        const rpcProvider = new ethers.providers.Web3Provider(
+            magic.rpcProvider
+        );
         const signer = rpcProvider.getSigner();
         const contractInstance = new ethers.Contract(
             ContractAddress,
@@ -536,23 +548,30 @@ const Dashboard = () => {
         console.log(contractInstance);
 
         let resFromSC;
-        resFromSC = await contractInstance.InitiateVoting(ethers.utils.parseEther(`${requestAmount}`));
+        resFromSC = await contractInstance.InitiateVoting(
+            ethers.utils.parseEther(`${requestAmount}`)
+        );
 
         console.log(resFromSC);
-    }
+    };
 
     const handleCloseVotes = async () => {
-        const magic = new Magic(process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY, {
-            network: {
-              rpcUrl: process.env.REACT_APP_RPC_URL,
-              chainId: 80001
-            },
-            extensions: [new OAuthExtension()],
-        });
+        const magic = new Magic(
+            process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
+            {
+                network: {
+                    rpcUrl: process.env.REACT_APP_RPC_URL,
+                    chainId: 80001,
+                },
+                extensions: [new OAuthExtension()],
+            }
+        );
 
         console.log(magic);
-    
-        const rpcProvider = new ethers.providers.Web3Provider(magic.rpcProvider);
+
+        const rpcProvider = new ethers.providers.Web3Provider(
+            magic.rpcProvider
+        );
         const signer = rpcProvider.getSigner();
         const contractInstance = new ethers.Contract(
             ContractAddress,
@@ -569,25 +588,71 @@ const Dashboard = () => {
         resFromSC = await resFromSC.wait();
 
         console.log(resFromSC);
-    }
+    };
 
     const saveCreatorDetails = async () => {
-        if(isValid(cdName) && isValid(cdDesc) && isValid(cdProfilePicURL) && isValid(cdSocialURL) && isValid(cdMilestone)){
-            const res = await axios.post(
-                `${process.env.REACT_APP_API}/user/setCreatorInfo`,
-                {
-                    emailId: state.user.emailId,
-                    name: cdName,
-                    description: cdDesc,
-                    profilePic: cdProfilePicURL,
-                    socialUrl: cdSocialURL
-                }
-            );
-            console.log(res.data);
-        }else{
+        if (
+            isValid(cdName) &&
+            isValid(cdDesc) &&
+            isValid(cdProfilePicURL) &&
+            isValid(cdSocialURL) &&
+            isValid(cdMilestone)
+        ) {
+            try {
+                const milestoneInWei = ethers.utils.parseEther(
+                    `${cdMilestone}`
+                );
+
+                const magic = new Magic(
+                    process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
+                    {
+                        network: {
+                            rpcUrl: process.env.REACT_APP_RPC_URL,
+                            chainId: 80001,
+                        },
+                        extensions: [new OAuthExtension()],
+                    }
+                );
+
+                console.log(magic);
+
+                const rpcProvider = new ethers.providers.Web3Provider(
+                    magic.rpcProvider
+                );
+                const signer = rpcProvider.getSigner();
+                const contractInstance = new ethers.Contract(
+                    ContractAddress,
+                    ContractABI,
+                    signer
+                );
+                console.log(contractInstance);
+
+                let resFromSC;
+                resFromSC = await contractInstance.setMilestoneGoal(
+                    milestoneInWei
+                );
+                resFromSC = await resFromSC.wait();
+                console.log(resFromSC);
+
+                const res = await axios.post(
+                    `${process.env.REACT_APP_API}/user/setCreatorInfo`,
+                    {
+                        emailId: state.user.emailId,
+                        name: cdName,
+                        description: cdDesc,
+                        profilePic: cdProfilePicURL,
+                        socialUrl: cdSocialURL,
+                    }
+                );
+                console.log(res.data);
+                closeCreatorSetupModal();
+            } catch (e) {
+                console.log(e);
+            }
+        } else {
             alert("Fill all the details first");
         }
-    }
+    };
 
     return (
         <OuterFrameContainer>
@@ -602,7 +667,9 @@ const Dashboard = () => {
                         <span>Your Name</span>
                         <CustomInput
                             value={cdName}
-                            onChange={(e) => {setCdName(e.target.value)}}
+                            onChange={(e) => {
+                                setCdName(e.target.value);
+                            }}
                             type="text"
                             placeholder="Creator Name"
                         />
@@ -611,7 +678,9 @@ const Dashboard = () => {
                         <span>Your work Description</span>
                         <CustomInput
                             value={cdDesc}
-                            onChange={(e) => {setCdDesc(e.target.value)}}
+                            onChange={(e) => {
+                                setCdDesc(e.target.value);
+                            }}
                             type="text"
                             placeholder="Describe your work"
                         />
@@ -620,7 +689,9 @@ const Dashboard = () => {
                         <span>Profile Picture URL</span>
                         <CustomInput
                             value={cdProfilePicURL}
-                            onChange={(e) => {setCdProfilePicURL(e.target.value)}}
+                            onChange={(e) => {
+                                setCdProfilePicURL(e.target.value);
+                            }}
                             type="text"
                             placeholder="www.asdf.com/imageurl"
                         />
@@ -629,22 +700,28 @@ const Dashboard = () => {
                         <span>Social Media URL</span>
                         <CustomInput
                             value={cdSocialURL}
-                            onChange={(e) => {setCdSocialURL(e.target.value)}}
+                            onChange={(e) => {
+                                setCdSocialURL(e.target.value);
+                            }}
                             type="text"
                             placeholder="Instagram/YouTube/Spotify"
                         />
                     </TextInputGroup>
                     <TextInputGroup>
-                        <span>Milestone Goal (Recommended: 100)</span>
+                        <span>Milestone Goal (Recommended: 10)</span>
                         <CustomInput
                             value={cdMilestone}
-                            onChange={(e) => {setCdMilestone(e.target.value)}}
-                            type="number"
+                            onChange={(e) => {
+                                setCdMilestone(e.target.value);
+                            }}
+                            type="text"
                             placeholder="Number of Crypts for Milestone"
                         />
                     </TextInputGroup>
                     <CreateProjModalBottom>
-                        <BecomeMemberBtn onClick={saveCreatorDetails}>Save</BecomeMemberBtn>
+                        <BecomeMemberBtn onClick={saveCreatorDetails}>
+                            Save
+                        </BecomeMemberBtn>
                     </CreateProjModalBottom>
                 </CreateProjModalContainer>
             </Modal>
@@ -679,7 +756,9 @@ const Dashboard = () => {
                                 <span>Required Amount in MATIC</span>
                                 <CustomInput
                                     value={requestAmount}
-                                    onChange={(e)=>{setRequestAmount(e.target.value)}}
+                                    onChange={(e) => {
+                                        setRequestAmount(e.target.value);
+                                    }}
                                     type="text"
                                     name=""
                                     id=""
@@ -687,7 +766,9 @@ const Dashboard = () => {
                                 />
                             </TextInputGroup>
                         </FullFlexDiv>
-                        <BecomeMemberBtn onClick={initiateVotingForRequest}>Request</BecomeMemberBtn>
+                        <BecomeMemberBtn onClick={initiateVotingForRequest}>
+                            Request
+                        </BecomeMemberBtn>
                     </CreateProjModalBottom>
                 </CreateProjModalContainer>
             </Modal>
@@ -698,19 +779,24 @@ const Dashboard = () => {
                 <SetupMessageContainer>
                     <SetupMessageBox>
                         <span>
-                            Hey there, your first step would be to setup your account with some basic details!
+                            Hey there, your first step would be to setup your
+                            account with some basic details!
                         </span>
-                        <SetupMessageBtn onClick={openCreatorSetupModal}>SETUP</SetupMessageBtn>
+                        <SetupMessageBtn onClick={openCreatorSetupModal}>
+                            SETUP
+                        </SetupMessageBtn>
                     </SetupMessageBox>
                 </SetupMessageContainer>
                 <FeedContainer>
-
-
-                    
-                    <BecomeMemberBtn onClick={getVotingStatus}>View Votes</BecomeMemberBtn>
-                    <BecomeMemberBtn onClick={openCreateProjectModal}>Request Funds</BecomeMemberBtn>
-                    <BecomeMemberBtn onClick={handleCloseVotes}>Close Votes & Transfer</BecomeMemberBtn>
-                    
+                    <BecomeMemberBtn onClick={getVotingStatus}>
+                        View Votes
+                    </BecomeMemberBtn>
+                    <BecomeMemberBtn onClick={openCreateProjectModal}>
+                        Request Funds
+                    </BecomeMemberBtn>
+                    <BecomeMemberBtn onClick={handleCloseVotes}>
+                        Close Votes & Transfer
+                    </BecomeMemberBtn>
                 </FeedContainer>
             </CreatorPageContainer>
         </OuterFrameContainer>
