@@ -215,10 +215,13 @@ contract crowd_funding {
             currentMilestone.contributorIdToAmount[
                 contributorId
             ] = amountInNext - (noOfNewMilestones - 1) * currentMilestone.goal ;
+            
+            currentMilestone.fundRaised = amountInNext - currentMilestone.goal * (noOfNewMilestones - 1);
 
             contributor.claimableAmount += (noOfNewMilestones - 1) * currentMilestone.goal * 5 / 100;
             
             currentMilestone.noOfContributors++;
+
         }
 
         //Update Membership Strength
@@ -226,6 +229,29 @@ contract crowd_funding {
         contributor.creatorIdToMembershipStrength[creatorId] +=
             amount *
             creator.totalFundRaised;
+    }
+
+    function viewCreatorInfo(uint256 creatorId) public view returns(uint256, uint256, uint256){
+        Creator storage creator = idToCreators[creatorId];
+        //  uint256 noOfProjects;
+        // mapping(uint256 => VotingVenture) idToVotingVenture;
+        // uint256 noOfVotingVentures;
+        // Contributor[] contributors;
+        // uint256 noOfContributors;
+        // uint256 activePoolAmount;
+        // uint256 redeemableAmount; //95%
+        // uint256 refundableAmount; //5%
+        // uint256 claimAmount;
+        // uint256 totalFundRaised;
+        // Milestone currentActiveMilestone;
+        // uint256 noOfMilestones;
+        return (creator.noOfContributors, creator.refundableAmount, creator.currentActiveMilestone.noOfContributors);
+    }
+
+    function viewClaimAmount() public view returns(uint256){
+        uint256 contributorId = contributorsAddressToID[msg.sender];
+        Contributor storage contributor = idToContributor[contributorId];
+        return contributor.claimableAmount;
     }
 
     function claimAmount() public payable {
@@ -277,14 +303,16 @@ contract crowd_funding {
         ] += 1 * idToCreators[creatorId].totalFundRaised;
     }
 
-    function getVotingStatus() public view returns(bool, uint256, uint256, uint256, uint256){
-        uint256 creatorId = creatorsAddressToID[msg.sender];
+    function getVotingStatus(address creatorAddress) public view returns(bool, uint256, uint256, uint256, uint256, bool){
+        uint256 creatorId = creatorsAddressToID[creatorAddress];
         Creator storage creator = idToCreators[creatorId];
-
+        if(creator.noOfVotingVentures <= 0){
+            return (false, 0, 0, 0, 0, false);
+        }
         VotingVenture storage currentVoting = creator.idToVotingVenture[
-            idToCreators[creatorId].noOfVotingVentures - 1
+            creator.noOfVotingVentures - 1
         ];
-        return (currentVoting.isVentureActive, currentVoting.noOfVoters, currentVoting.upScore, currentVoting.downScore, currentVoting.amount);
+        return (currentVoting.isVentureActive, currentVoting.noOfVoters, currentVoting.upScore, currentVoting.downScore, currentVoting.amount, currentVoting.hasVoted[msg.sender]);
     }
 
     function endVoting() public {

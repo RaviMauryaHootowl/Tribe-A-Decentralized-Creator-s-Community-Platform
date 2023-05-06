@@ -179,6 +179,7 @@ const FeedContainer = styled.div`
 
 const TopFeedActionsContainer = styled.div`
     width: 100%;
+    min-height: 3rem;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -342,6 +343,71 @@ const ModalHeader = styled.span`
     text-align: center;
 `;
 
+const VoteViewContainer = styled.div`
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+`;
+
+const VoteBarView = styled.div`
+    width: 100%;
+    display: grid;
+    column-gap: 1rem;
+    place-items: center;
+    grid-template-columns: auto 1fr;
+    color: white;
+`;
+
+const VoteBarLabel = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+`;
+
+const VoteBarContainer = styled.div`
+    height: 8px;
+    width: 100%;
+    background-color: white;
+`;
+
+const VoteBarFilled = styled.div`
+    height: 8px;
+    width: ${props => props.percent}%;
+    background-color: green;
+`;
+
+const VotingModalActions = styled.div`
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+`;
+
+const TextViewGroup = styled.div`
+    background-color: #161616;
+    color: white;
+    border-radius: 6px;
+    border: none;
+    outline: none;
+    padding: 0.8rem 1rem;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    flex-direction: column;
+    display: flex;
+
+    span {
+        font-size: 0.9rem;
+        font-weight: bold;
+        margin-bottom: 0.6rem;
+        color: #c1c1c1;
+    }
+`;
+
+const TextViewContent = styled.div`
+    font: 1.1rem;
+`;
+
 const TextInputGroup = styled.div`
     background-color: #161616;
     color: white;
@@ -376,6 +442,7 @@ const CreateProjModalBottom = styled.div`
     align-items: center;
 `;
 
+
 const FullFlexDiv = styled.div`
     flex: 1;
 `;
@@ -393,6 +460,7 @@ const CreatorFeed = ({match}) => {
     const [becomeMemberValue, setBecomeMemberValue] = useState();
     const [isMember, setIsMember] = useState(false);
     const [milestoneInfo, setMilestoneInfo] = useState({});
+    const [votingInfo, setVotingInfo] = useState({});
 
     useEffect(() => {
         console.log(state.user);
@@ -421,6 +489,7 @@ const CreatorFeed = ({match}) => {
             }
             setCreatorInfo(res.data);
             getMilestoneDetails(res.data.walletAddress);
+            getVoteDetails(res.data.walletAddress);
         } catch (err) {
             console.log(err);
             setCreatorInfo({});
@@ -506,6 +575,60 @@ const CreatorFeed = ({match}) => {
         }
     }
 
+    const getVoteDetails = async (creatorWalletAddress) => {
+        try{
+            const magic = new Magic(process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY, {
+                network: {
+                  rpcUrl: process.env.REACT_APP_RPC_URL,
+                  chainId: 80001
+                },
+                extensions: [new OAuthExtension()],
+            });
+    
+            console.log(magic);
+        
+            const rpcProvider = new ethers.providers.Web3Provider(magic.rpcProvider);
+            const signer = rpcProvider.getSigner();
+            const contractInstance = new ethers.Contract(
+                ContractAddress,
+                ContractABI,
+                signer
+            );
+            console.log(contractInstance);
+    
+            let resFromSC;
+            resFromSC = await contractInstance.getVotingStatus(creatorWalletAddress);
+            console.log(resFromSC);
+
+            const res = await axios.get(
+                `${process.env.REACT_APP_API}/user/getCreatorInfo?walletAddress=${creatorWalletAddress}`
+            );
+            console.log(res.data);
+            const upVoteCount = parseInt(resFromSC[2].toString());
+            const downVoteCount = parseInt(resFromSC[3].toString());
+            setVotingInfo({
+                name: res.data.votingName,
+                desc: res.data.votingDesc,
+                isLive: resFromSC[0],
+                hasVoted: resFromSC[5],
+                noOfVotes: parseInt(resFromSC[1].toString()),
+                upvoteCount: upVoteCount,
+                downvoteCount: downVoteCount,
+                percentUp: (upVoteCount + downVoteCount != 0) ? upVoteCount * 100 / (upVoteCount + downVoteCount) : 0,
+                percentDown: (upVoteCount + downVoteCount != 0) ? downVoteCount * 100 / (upVoteCount + downVoteCount) : 0,
+                amount: parseInt(resFromSC[4].toString())
+            });
+            
+        }catch(e){
+            console.log(e);
+            
+        }
+    }
+
+    useEffect(() => {
+        console.log(votingInfo);
+    },[votingInfo]);
+
     const castVote = async (isTrue) => {
         try{
             const magic = new Magic(process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY, {
@@ -531,8 +654,7 @@ const CreatorFeed = ({match}) => {
             resFromSC = await contractInstance.vote(creatorInfo.walletAddress, isTrue);
             resFromSC = await resFromSC.wait();
             console.log(resFromSC);
-
-            alert("Vote done!");
+            getVoteDetails(creatorInfo.walletAddress);
         }catch(e){
             console.log(e);
             
@@ -561,6 +683,7 @@ const CreatorFeed = ({match}) => {
     }
 
     const openVoteModal = () => {
+        
         setIsVoteModalOpen(true);
     }
 
@@ -597,10 +720,33 @@ const CreatorFeed = ({match}) => {
             >
                 <CreateProjModalContainer>
                     <ModalHeader>Cast Vote</ModalHeader>
-                    <CreateProjModalBottom>
-                        <BecomeMemberBtn onClick={() => {castVote(true)}}>Vote Yes</BecomeMemberBtn>
-                        <BecomeMemberBtn onClick={() => {castVote(false)}}>Vote No</BecomeMemberBtn>
-                    </CreateProjModalBottom>
+                    <VoteViewContainer>
+                        <TextViewGroup>
+                            <span>Request Name</span>
+                            <TextViewContent>{votingInfo.name}</TextViewContent>
+                        </TextViewGroup>
+                        <TextViewGroup>
+                            <span>Request Description</span>
+                            <TextViewContent>{votingInfo.desc}</TextViewContent>
+                        </TextViewGroup>
+                        <VoteBarView>
+                            <VoteBarLabel>Yes</VoteBarLabel>
+                            <VoteBarContainer>
+                                <VoteBarFilled percent={votingInfo.percentUp}></VoteBarFilled>
+                            </VoteBarContainer>
+                            <VoteBarLabel>No</VoteBarLabel>
+                            <VoteBarContainer>
+                                <VoteBarFilled percent={votingInfo.percentDown}></VoteBarFilled>
+                            </VoteBarContainer>
+                        </VoteBarView>
+                    </VoteViewContainer>
+                    {
+                        !votingInfo.hasVoted && <VotingModalActions>
+                            <BecomeMemberBtn onClick={() => {castVote(true)}}>Vote Yes</BecomeMemberBtn>
+                            <BecomeMemberBtn onClick={() => {castVote(false)}}>Vote No</BecomeMemberBtn>
+                        </VotingModalActions>
+                    }
+                    
                 </CreateProjModalContainer>
             </Modal>
             <Modal
@@ -686,8 +832,10 @@ const CreatorFeed = ({match}) => {
                             isMember ? <></> : 
                             <BecomeMemberBtn onClick={openBecomeMemberModal}>Become a Member</BecomeMemberBtn>
                         }
-                        {/* <FollowBtn>Follow</FollowBtn> */}
-                        <FollowBtn onClick={openVoteModal}>Vote</FollowBtn>
+                        {
+                            votingInfo.isLive && <FollowBtn onClick={openVoteModal}>Vote</FollowBtn>
+                        }
+                        
                     </TopFeedActionsContainer>
                     <FeedSection>
                         <SectionHeader>MY STORY</SectionHeader>

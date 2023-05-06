@@ -178,3 +178,18 @@ exports.joinMembership = async (req, res) => {
         res.status(500).json({ message: error });
     }
 }
+
+exports.updateVotingInfo = async (req, res) => {
+    try{
+        const {emailId, votingName, votingDesc} = req.body;
+        await Creator.findOneAndUpdate(
+            {emailId},
+            { votingName, votingDesc }
+        ).exec();
+
+        return res.send({message: "success"});
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error });
+    }
+}

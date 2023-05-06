@@ -83,7 +83,11 @@ const Sidebar = () => {
                 <TravelExploreRoundedIcon />
                 <span>Discover</span>
             </SideOptionCard>
-            <SideOptionCard>
+            <SideOptionCard
+                onClick={() => {
+                    navigate("/crypts");
+                }}
+            >
                 <LocalFireDepartmentRoundedIcon />
                 <span>Crypts</span>
             </SideOptionCard>

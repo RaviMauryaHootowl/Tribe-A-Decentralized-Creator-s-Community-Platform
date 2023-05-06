@@ -11,6 +11,7 @@ import Discover from "./pages/Discover/Discover";
 import SignUpCreatorPage from "./pages/SignUp/SignUpCreatorPage";
 import RedirectCreator from "./pages/Redirect/RedirectCreator";
 import Dashboard from "./pages/Dashboard/Dashboard";
+import CryptsPage from "./pages/CryptsPage/CryptsPage";
 
 const App = () => {
     const router = createBrowserRouter([
@@ -45,6 +46,10 @@ const App = () => {
         {
           path: "/redirectCreator",
           element: <RedirectCreator />
+        },
+        {
+          path: "/crypts",
+          element: <CryptsPage />
         },
     ]);
 

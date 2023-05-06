@@ -26,7 +26,13 @@ const creatorSchema = new Schema({
     }],
     members: [{
         emailId: String
-    }]
+    }],
+    votingName: {
+        type: String
+    },
+    votingDesc: {
+        type: String
+    }
 });
 
 module.exports = mongoose.model('Creator', creatorSchema);

@@ -453,7 +453,23 @@ const SetupMessageBtn = styled.button`
     }
 `;
 
-const Dashboard = () => {
+const ClaimablesList = styled.div`
+    width: 100%;
+    display: flex;
+`;
+
+const ClaimCard = styled.div`
+    padding: 1rem;
+    height: 6rem;
+    background-color: #8484ff;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+`;
+
+const CryptsPage = () => {
     const { state, dispatch } = useContext(StoreContext);
     const navigate = useNavigate();
     const [requestAmount, setRequestAmount] = useState("");
@@ -464,9 +480,13 @@ const Dashboard = () => {
     const [cdMilestone, setCdMilestone] = useState("");
     const [votingName, setVotingName] = useState("");
     const [votingDesc, setVotingDesc] = useState("");
+    const [claimAmount, setClaimAmount] = useState("");
 
     useEffect(() => {
         console.log(state.user);
+        if(state.user.walletAddress){
+            getClaimableInfo();
+        }
     }, [state.user]);
 
     const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] =
@@ -491,7 +511,7 @@ const Dashboard = () => {
         setIsCreatorSetupModalOpen(true);
     };
 
-    const getVotingStatus = async () => {
+    const getClaimableInfo = async () => {
         const magic = new Magic(
             process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
             {
@@ -517,15 +537,14 @@ const Dashboard = () => {
         console.log(contractInstance);
 
         let resFromSC;
-        resFromSC = await contractInstance.getVotingStatus(
-            state.user.walletAddress
-        );
+        resFromSC = await contractInstance.viewClaimAmount();
 
         console.log(resFromSC);
+        setClaimAmount(parseInt(resFromSC.toString()) / 10e18);
     };
 
     const initiateVotingForRequest = async () => {
-        try{
+        try {
             const magic = new Magic(
                 process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
                 {
@@ -536,9 +555,9 @@ const Dashboard = () => {
                     extensions: [new OAuthExtension()],
                 }
             );
-    
+
             console.log(magic);
-    
+
             const rpcProvider = new ethers.providers.Web3Provider(
                 magic.rpcProvider
             );
@@ -549,12 +568,12 @@ const Dashboard = () => {
                 signer
             );
             console.log(contractInstance);
-    
+
             let resFromSC;
             resFromSC = await contractInstance.InitiateVoting(
                 ethers.utils.parseEther(`${requestAmount}`)
             );
-    
+
             console.log(resFromSC);
 
             const res = await axios.post(
@@ -562,17 +581,17 @@ const Dashboard = () => {
                 {
                     emailId: state.user.emailId,
                     votingName,
-                    votingDesc
+                    votingDesc,
                 }
             );
             console.log(res.data);
             closeCreateProjectModal();
-
-        } catch(e){
+        } catch (e) {
             console.log(e);
-            alert("Error in requesting funds, mostly due to reqesting more than collected amount!");
+            alert(
+                "Error in requesting funds, mostly due to reqesting more than collected amount!"
+            );
         }
-        
     };
 
     const handleCloseVotes = async () => {
@@ -757,7 +776,9 @@ const Dashboard = () => {
                         <CustomInput
                             type="text"
                             value={votingName}
-                            onChange={(e) => {setVotingName(e.target.value)}}
+                            onChange={(e) => {
+                                setVotingName(e.target.value);
+                            }}
                             placeholder="What are you creating?"
                         />
                     </TextInputGroup>
@@ -766,7 +787,9 @@ const Dashboard = () => {
                         <CustomInput
                             type="text"
                             value={votingDesc}
-                            onChange={(e) => {setVotingDesc(e.target.value)}}
+                            onChange={(e) => {
+                                setVotingDesc(e.target.value);
+                            }}
                             placeholder="Describe why you need the funds"
                         />
                     </TextInputGroup>
@@ -792,33 +815,18 @@ const Dashboard = () => {
             </Modal>
             <Sidebar />
             <CreatorPageContainer>
-                <Navbar title={"DASHBOARD"} />
-
-                <SetupMessageContainer>
-                    <SetupMessageBox>
-                        <span>
-                            Hey there, your first step would be to setup your
-                            account with some basic details!
-                        </span>
-                        <SetupMessageBtn onClick={openCreatorSetupModal}>
-                            SETUP
-                        </SetupMessageBtn>
-                    </SetupMessageBox>
-                </SetupMessageContainer>
+                <Navbar title={"CRYPTS"} />
                 <FeedContainer>
-                    <BecomeMemberBtn onClick={getVotingStatus}>
-                        View Votes
-                    </BecomeMemberBtn>
-                    <BecomeMemberBtn onClick={openCreateProjectModal}>
-                        Request Funds
-                    </BecomeMemberBtn>
-                    <BecomeMemberBtn onClick={handleCloseVotes}>
-                        Close Votes & Transfer
-                    </BecomeMemberBtn>
+                    <FeedSection>
+                        <SectionHeader>Claimables ✨</SectionHeader>
+                        <ClaimablesList>
+                            <ClaimCard>{claimAmount} MATIC</ClaimCard>
+                        </ClaimablesList>
+                    </FeedSection>
                 </FeedContainer>
             </CreatorPageContainer>
         </OuterFrameContainer>
     );
 };
 
-export default Dashboard;
+export default CryptsPage;
