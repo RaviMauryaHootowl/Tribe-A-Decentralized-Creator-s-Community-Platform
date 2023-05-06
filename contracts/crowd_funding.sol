@@ -148,8 +148,10 @@ contract crowd_funding {
 
         // contributor contri update @contri
         Contributor storage contributor = idToContributor[contributorId];
-        contributor.listOfIdContributedCreators.push(creatorId);
-        contributor.noOfContibutedCreators++;
+        if (contributor.creatorToAmount[creatorId] == 0) {
+            contributor.listOfIdContributedCreators.push(creatorId);
+            contributor.noOfContibutedCreators++;
+        }
         contributor.creatorToAmount[creatorId] += amount;
 
         // contributor contri update @creator
@@ -163,8 +165,10 @@ contract crowd_funding {
 
         if ((currentMilestone.fundRaised + amount) < currentMilestone.goal) {
             currentMilestone.fundRaised += amount;
-            currentMilestone.contributorsList.push(contributorId);
-            currentMilestone.noOfContributors++;
+            if (currentMilestone.contributorIdToAmount[contributorId] == 0) {
+                currentMilestone.contributorsList.push(contributorId);
+                currentMilestone.noOfContributors++;
+            }
             currentMilestone.contributorIdToAmount[contributorId] += amount;
         } else {
             uint256 amountInCurrent = currentMilestone.goal -
@@ -193,18 +197,27 @@ contract crowd_funding {
                 currentMilestone.contributorIdToAmount[id] = 0;
             }
 
-            // 3. create new milestone / resetting the milestone
-            creator.noOfMilestones++;
+            // 3. recursive func
+            
 
+            // 3. create new milestone / resetting the milestone
             currentMilestone.contributorsList = new uint256[](0);
-            currentMilestone.fundRaised = amountInNext;
             currentMilestone.noOfContributors = 0;
+            currentMilestone.fundRaised = 0;
+
+            uint256 noOfNewMilestones = amountInNext / currentMilestone.goal + 1;
+            creator.noOfMilestones += noOfNewMilestones;
 
             if (amountInNext <= 0) return;
+
             currentMilestone.contributorsList.push(contributorId);
+            
             currentMilestone.contributorIdToAmount[
                 contributorId
-            ] = amountInNext;
+            ] = amountInNext - (noOfNewMilestones - 1) * currentMilestone.goal ;
+
+            contributor.claimableAmount += (noOfNewMilestones - 1) * currentMilestone.goal * 5 / 100;
+            
             currentMilestone.noOfContributors++;
         }
 
@@ -225,16 +238,6 @@ contract crowd_funding {
     }
 
     function vote(address creatorAddress, bool isUpvote) public {
-        // struct VotingVenture{
-        //     uint256 initiationDate;
-        //     uint256 noOfVoters;
-        //     uint256 maxVotingScore;
-        //     uint256 amount;
-        //     uint256 currentVotingScore;
-        //     mapping of address => bool hasVoted;
-        // ------------------------------
-        //     mapping (uint256=>VotingVenture) idToVotingVenture;
-        //     uint256 noOfVotingVentures;
 
         uint256 contributorId = contributorsAddressToID[msg.sender];
         uint256 creatorId = creatorsAddressToID[creatorAddress];
@@ -354,5 +357,11 @@ contract crowd_funding {
         fundsRaised = creator.currentActiveMilestone.fundRaised;
 
         return (goal,fundsRaised,milestoneNo);
+    }
+
+    function setMilestone(uint256 newGoal)public{
+        uint256 creatorId = creatorsAddressToID[msg.sender];
+        Creator storage creator = idToCreators[creatorId];
+        creator.currentActiveMilestone.goal = newGoal;
     }
 }
