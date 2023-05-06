@@ -341,13 +341,6 @@ contract crowd_funding {
         return idToContributor[contributorId].claimableAmount;
     }
 
-    function setMilestoneGoal(uint256 newGoal) public {
-        require(abi.encodePacked(creatorsAddressToID[msg.sender]).length > 0, "Creator does not exist");
-        uint256 creatorId = creatorsAddressToID[msg.sender];
-        Creator storage creator = idToCreators[creatorId];
-        creator.currentActiveMilestone.goal = newGoal;
-    }
-
     function getMilestoneDetails(address creatorAddress)public view returns (uint256 goal,uint256 fundsRaised, uint256 milestoneNo ){
 
         uint256 creatorId = creatorsAddressToID[creatorAddress];
@@ -359,7 +352,8 @@ contract crowd_funding {
         return (goal,fundsRaised,milestoneNo);
     }
 
-    function setMilestone(uint256 newGoal)public{
+    function setMilestoneGoal(uint256 newGoal)public{
+        require(abi.encodePacked(creatorsAddressToID[msg.sender]).length > 0, "Creator does not exist");
         uint256 creatorId = creatorsAddressToID[msg.sender];
         Creator storage creator = idToCreators[creatorId];
         creator.currentActiveMilestone.goal = newGoal;
