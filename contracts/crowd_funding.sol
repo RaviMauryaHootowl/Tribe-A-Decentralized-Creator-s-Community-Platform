@@ -157,7 +157,7 @@ contract crowd_funding {
         creator.totalFundRaised += amount;
         creator.activePoolAmount += amount;
         creator.redeemableAmount += (95 * amount) / 100;
-        creator.refundableAmount += amount - creator.redeemableAmount;
+        creator.refundableAmount += (5 * amount) / 100;
         //updating milestone
         Milestone storage currentMilestone = creator.currentActiveMilestone;
 
@@ -274,8 +274,8 @@ contract crowd_funding {
         ] += 1 * idToCreators[creatorId].totalFundRaised;
     }
 
-    function getVotingStatus(address creatorAddress) public view returns(bool, uint256, uint256, uint256, uint256){
-        uint256 creatorId = creatorsAddressToID[creatorAddress];
+    function getVotingStatus() public view returns(bool, uint256, uint256, uint256, uint256){
+        uint256 creatorId = creatorsAddressToID[msg.sender];
         Creator storage creator = idToCreators[creatorId];
 
         VotingVenture storage currentVoting = creator.idToVotingVenture[
