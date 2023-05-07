@@ -145,36 +145,36 @@ export const magicLogin = async (state, dispatch, did, userInfo, isCreator) => {
             userInfo
         });
         console.log(userBackend);
-
-        // also register on smart contract
-        console.log("Registering on SC");
-        const magic = new Magic(process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY, {
-            network: {
-              rpcUrl: process.env.REACT_APP_RPC_URL,
-              chainId: 80001
-            },
-            extensions: [new OAuthExtension()],
-          });
-
-          console.log(magic);
-    
-        const rpcProvider = new ethers.providers.Web3Provider(magic.rpcProvider);
-        const signer = rpcProvider.getSigner();
-        const contractInstance = new ethers.Contract(
-            ContractAddress,
-            ContractABI,
-            signer
-        );
-        console.log(contractInstance);
-
         let resFromSC;
-        if(isCreator){
-            resFromSC = await contractInstance.RegisterCreator("Creator name", "youtube", 1000);
-        }else{
-            resFromSC = await contractInstance.RegisterContributor("Contributor name");
-        }
+        if(userBackend.data.isUserNew){
+            // also register on smart contract
+            console.log("Registering on SC");
+            const magic = new Magic(process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY, {
+                network: {
+                rpcUrl: process.env.REACT_APP_RPC_URL,
+                chainId: 80001
+                },
+                extensions: [new OAuthExtension()],
+            });
 
-        console.log(resFromSC);
+            console.log(magic);
+        
+            const rpcProvider = new ethers.providers.Web3Provider(magic.rpcProvider);
+            const signer = rpcProvider.getSigner();
+            const contractInstance = new ethers.Contract(
+                ContractAddress,
+                ContractABI,
+                signer
+            );
+            console.log(contractInstance);
+
+            
+            if(isCreator){
+                resFromSC = await contractInstance.RegisterCreator("Creator name", "youtube", 1000);
+            }else{
+                resFromSC = await contractInstance.RegisterContributor("Contributor name");
+            }
+        }
 
 
         const inThirtyMins = new Date(new Date().getTime() + 30 * 60 * 1000);

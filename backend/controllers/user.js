@@ -18,7 +18,7 @@ exports.magicLoginUser = async (req, res) => {
         const publicAddress = mAdmin.token.getPublicAddress(DIDToken);
 
         let userObj = await User.findOne({emailId: userEmail}).exec();
-
+        let isUserNew = false;
         if(!userObj){
             userObj = await User.create({
                 userName: `username_${userEmail}`,
@@ -26,6 +26,7 @@ exports.magicLoginUser = async (req, res) => {
                 walletAddress: publicAddress,
                 emailId: userEmail
             });
+            isUserNew = true;
         }
 
         console.log("CREATED USR", userObj)
@@ -40,6 +41,7 @@ exports.magicLoginUser = async (req, res) => {
             user_instance: userObj,
             message: message,
             token,
+            isUserNew
         });
 
     } catch (error) {
@@ -64,6 +66,7 @@ exports.magicLoginCreator = async (req, res) => {
 
         let userObj = await User.findOne({emailId: userEmail}).exec();
         let creatorObj;
+        let isUserNew = false;
 
         if(!userObj){
             userObj = await User.create({
@@ -80,6 +83,7 @@ exports.magicLoginCreator = async (req, res) => {
                 isVotingLive: false,
                 projects: []
             });
+            isUserNew = true;
         }else{
             creatorObj = await Creator.findOne({emailId: userEmail}).exec();
             if(!creatorObj){
@@ -103,6 +107,7 @@ exports.magicLoginCreator = async (req, res) => {
             user_instance: {...(userObj.toObject()), ...(creatorObj.toObject())},
             message: message,
             token,
+            isUserNew
         });
 
     } catch (error) {

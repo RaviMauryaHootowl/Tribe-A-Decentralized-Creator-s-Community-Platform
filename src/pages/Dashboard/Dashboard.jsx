@@ -601,7 +601,7 @@ const Dashboard = () => {
         console.log(contractInstance);
 
         let resFromSC;
-        resFromSC = await contractInstance.getMyVotingVentureResult();
+        resFromSC = await contractInstance.endVoting();
         resFromSC = await resFromSC.wait();
 
         resFromSC = await contractInstance.claimAmountForCreator();

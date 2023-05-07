@@ -248,16 +248,19 @@ contract crowd_funding {
         return (creator.noOfContributors, creator.refundableAmount, creator.currentActiveMilestone.noOfContributors);
     }
 
-    function viewClaimAmount() public view returns(uint256){
-        uint256 contributorId = contributorsAddressToID[msg.sender];
+    function viewClaimAmount(address owner) public view returns(uint256){
+        require(abi.encodePacked(contributorsAddressToID[owner]).length > 0, "Contributor does not exist");
+        uint256 contributorId = contributorsAddressToID[owner];
         Contributor storage contributor = idToContributor[contributorId];
-        return contributor.claimableAmount;
+        uint256 claimableAmount = contributor.claimableAmount;
+        return claimableAmount;
     }
 
     function claimAmount() public payable {
+        require(abi.encodePacked(contributorsAddressToID[msg.sender]).length > 0, "Contributor does not exist");
         uint256 contributorId = contributorsAddressToID[msg.sender];
         Contributor storage contributor = idToContributor[contributorId];
-        require(contributor.claimableAmount == 0, "Not enough fund to claim");
+        require(contributor.claimableAmount > 0, "Not enough fund to claim");
         address payable contributorAddress = payable(msg.sender);
         contributorAddress.transfer(contributor.claimableAmount);
         contributor.claimableAmount = 0;

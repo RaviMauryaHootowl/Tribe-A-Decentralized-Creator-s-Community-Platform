@@ -464,6 +464,7 @@ const ClaimCard = styled.div`
     background-color: #8484ff;
     border-radius: 8px;
     display: flex;
+    text-align: center;
     justify-content: center;
     align-items: center;
     cursor: pointer;
@@ -472,14 +473,6 @@ const ClaimCard = styled.div`
 const CryptsPage = () => {
     const { state, dispatch } = useContext(StoreContext);
     const navigate = useNavigate();
-    const [requestAmount, setRequestAmount] = useState("");
-    const [cdName, setCdName] = useState("");
-    const [cdDesc, setCdDesc] = useState("");
-    const [cdProfilePicURL, setCdProfilePicURL] = useState("");
-    const [cdSocialURL, setCdSocialURL] = useState("");
-    const [cdMilestone, setCdMilestone] = useState("");
-    const [votingName, setVotingName] = useState("");
-    const [votingDesc, setVotingDesc] = useState("");
     const [claimAmount, setClaimAmount] = useState("");
 
     useEffect(() => {
@@ -489,62 +482,9 @@ const CryptsPage = () => {
         }
     }, [state.user]);
 
-    const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] =
-        useState(false);
-
-    const [isCreatorSetupModalOpen, setIsCreatorSetupModalOpen] =
-        useState(false);
-
-    const closeCreateProjectModal = () => {
-        setIsCreateProjectModalOpen(false);
-    };
-
-    const openCreateProjectModal = () => {
-        setIsCreateProjectModalOpen(true);
-    };
-
-    const closeCreatorSetupModal = () => {
-        setIsCreatorSetupModalOpen(false);
-    };
-
-    const openCreatorSetupModal = () => {
-        setIsCreatorSetupModalOpen(true);
-    };
-
     const getClaimableInfo = async () => {
-        const magic = new Magic(
-            process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
-            {
-                network: {
-                    rpcUrl: process.env.REACT_APP_RPC_URL,
-                    chainId: 80001,
-                },
-                extensions: [new OAuthExtension()],
-            }
-        );
+        try{
 
-        console.log(magic);
-
-        const rpcProvider = new ethers.providers.Web3Provider(
-            magic.rpcProvider
-        );
-        const signer = rpcProvider.getSigner();
-        const contractInstance = new ethers.Contract(
-            ContractAddress,
-            ContractABI,
-            signer
-        );
-        console.log(contractInstance);
-
-        let resFromSC;
-        resFromSC = await contractInstance.viewClaimAmount();
-
-        console.log(resFromSC);
-        setClaimAmount(parseInt(resFromSC.toString()) / 10e18);
-    };
-
-    const initiateVotingForRequest = async () => {
-        try {
             const magic = new Magic(
                 process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
                 {
@@ -555,264 +495,69 @@ const CryptsPage = () => {
                     extensions: [new OAuthExtension()],
                 }
             );
-
+    
             console.log(magic);
-
+    
             const rpcProvider = new ethers.providers.Web3Provider(
                 magic.rpcProvider
             );
             const signer = rpcProvider.getSigner();
+            console.log(await signer.getAddress());
             const contractInstance = new ethers.Contract(
                 ContractAddress,
                 ContractABI,
                 signer
             );
             console.log(contractInstance);
-
-            let resFromSC;
-            resFromSC = await contractInstance.InitiateVoting(
-                ethers.utils.parseEther(`${requestAmount}`)
-            );
-
+    
+            const resFromSC = await contractInstance.viewClaimAmount(state.user.walletAddress);
+    
             console.log(resFromSC);
+            setClaimAmount(parseInt(resFromSC.toString()) / 10e18);
+        } catch(e){
+            console.log(e);
+        }
+    };
 
-            const res = await axios.post(
-                `${process.env.REACT_APP_API}/user/updateVotingInfo`,
+    const handleClaimAmount = async () => {
+        try{
+
+            const magic = new Magic(
+                process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
                 {
-                    emailId: state.user.emailId,
-                    votingName,
-                    votingDesc,
+                    network: {
+                        rpcUrl: process.env.REACT_APP_RPC_URL,
+                        chainId: 80001,
+                    },
+                    extensions: [new OAuthExtension()],
                 }
             );
-            console.log(res.data);
-            closeCreateProjectModal();
-        } catch (e) {
-            console.log(e);
-            alert(
-                "Error in requesting funds, mostly due to reqesting more than collected amount!"
+    
+            console.log(magic);
+    
+            const rpcProvider = new ethers.providers.Web3Provider(
+                magic.rpcProvider
             );
+            const signer = rpcProvider.getSigner();
+            console.log(await signer.getAddress());
+            const contractInstance = new ethers.Contract(
+                ContractAddress,
+                ContractABI,
+                signer
+            );
+            console.log(contractInstance);
+    
+            let resFromSC = await contractInstance.claimAmount();
+            resFromSC = await resFromSC.wait();
+            console.log(resFromSC);
+            getClaimableInfo();
+        } catch(e){
+            console.log(e);
         }
-    };
-
-    const handleCloseVotes = async () => {
-        const magic = new Magic(
-            process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
-            {
-                network: {
-                    rpcUrl: process.env.REACT_APP_RPC_URL,
-                    chainId: 80001,
-                },
-                extensions: [new OAuthExtension()],
-            }
-        );
-
-        console.log(magic);
-
-        const rpcProvider = new ethers.providers.Web3Provider(
-            magic.rpcProvider
-        );
-        const signer = rpcProvider.getSigner();
-        const contractInstance = new ethers.Contract(
-            ContractAddress,
-            ContractABI,
-            signer
-        );
-        console.log(contractInstance);
-
-        let resFromSC;
-        resFromSC = await contractInstance.getMyVotingVentureResult();
-        resFromSC = await resFromSC.wait();
-
-        resFromSC = await contractInstance.claimAmountForCreator();
-        resFromSC = await resFromSC.wait();
-
-        console.log(resFromSC);
-    };
-
-    const saveCreatorDetails = async () => {
-        if (
-            isValid(cdName) &&
-            isValid(cdDesc) &&
-            isValid(cdProfilePicURL) &&
-            isValid(cdSocialURL) &&
-            isValid(cdMilestone)
-        ) {
-            try {
-                const milestoneInWei = ethers.utils.parseEther(
-                    `${cdMilestone}`
-                );
-
-                const magic = new Magic(
-                    process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
-                    {
-                        network: {
-                            rpcUrl: process.env.REACT_APP_RPC_URL,
-                            chainId: 80001,
-                        },
-                        extensions: [new OAuthExtension()],
-                    }
-                );
-
-                console.log(magic);
-
-                const rpcProvider = new ethers.providers.Web3Provider(
-                    magic.rpcProvider
-                );
-                const signer = rpcProvider.getSigner();
-                const contractInstance = new ethers.Contract(
-                    ContractAddress,
-                    ContractABI,
-                    signer
-                );
-                console.log(contractInstance);
-
-                let resFromSC;
-                resFromSC = await contractInstance.setMilestoneGoal(
-                    milestoneInWei
-                );
-                resFromSC = await resFromSC.wait();
-                console.log(resFromSC);
-
-                const res = await axios.post(
-                    `${process.env.REACT_APP_API}/user/setCreatorInfo`,
-                    {
-                        emailId: state.user.emailId,
-                        name: cdName,
-                        description: cdDesc,
-                        profilePic: cdProfilePicURL,
-                        socialUrl: cdSocialURL,
-                    }
-                );
-                console.log(res.data);
-                closeCreatorSetupModal();
-            } catch (e) {
-                console.log(e);
-            }
-        } else {
-            alert("Fill all the details first");
-        }
-    };
+    }
 
     return (
         <OuterFrameContainer>
-            <Modal
-                isOpen={isCreatorSetupModalOpen}
-                onRequestClose={closeCreatorSetupModal}
-                style={createProjectModalStyles}
-            >
-                <CreateProjModalContainer>
-                    <ModalHeader>Creator Setup</ModalHeader>
-                    <TextInputGroup>
-                        <span>Your Name</span>
-                        <CustomInput
-                            value={cdName}
-                            onChange={(e) => {
-                                setCdName(e.target.value);
-                            }}
-                            type="text"
-                            placeholder="Creator Name"
-                        />
-                    </TextInputGroup>
-                    <TextInputGroup>
-                        <span>Your work Description</span>
-                        <CustomInput
-                            value={cdDesc}
-                            onChange={(e) => {
-                                setCdDesc(e.target.value);
-                            }}
-                            type="text"
-                            placeholder="Describe your work"
-                        />
-                    </TextInputGroup>
-                    <TextInputGroup>
-                        <span>Profile Picture URL</span>
-                        <CustomInput
-                            value={cdProfilePicURL}
-                            onChange={(e) => {
-                                setCdProfilePicURL(e.target.value);
-                            }}
-                            type="text"
-                            placeholder="www.asdf.com/imageurl"
-                        />
-                    </TextInputGroup>
-                    <TextInputGroup>
-                        <span>Social Media URL</span>
-                        <CustomInput
-                            value={cdSocialURL}
-                            onChange={(e) => {
-                                setCdSocialURL(e.target.value);
-                            }}
-                            type="text"
-                            placeholder="Instagram/YouTube/Spotify"
-                        />
-                    </TextInputGroup>
-                    <TextInputGroup>
-                        <span>Milestone Goal (Recommended: 10)</span>
-                        <CustomInput
-                            value={cdMilestone}
-                            onChange={(e) => {
-                                setCdMilestone(e.target.value);
-                            }}
-                            type="text"
-                            placeholder="Number of Crypts for Milestone"
-                        />
-                    </TextInputGroup>
-                    <CreateProjModalBottom>
-                        <BecomeMemberBtn onClick={saveCreatorDetails}>
-                            Save
-                        </BecomeMemberBtn>
-                    </CreateProjModalBottom>
-                </CreateProjModalContainer>
-            </Modal>
-            <Modal
-                isOpen={isCreateProjectModalOpen}
-                onRequestClose={closeCreateProjectModal}
-                style={createProjectModalStyles}
-            >
-                <CreateProjModalContainer>
-                    <ModalHeader>Request Funds</ModalHeader>
-                    <TextInputGroup>
-                        <span>Request Name</span>
-                        <CustomInput
-                            type="text"
-                            value={votingName}
-                            onChange={(e) => {
-                                setVotingName(e.target.value);
-                            }}
-                            placeholder="What are you creating?"
-                        />
-                    </TextInputGroup>
-                    <TextInputGroup>
-                        <span>Request Description</span>
-                        <CustomInput
-                            type="text"
-                            value={votingDesc}
-                            onChange={(e) => {
-                                setVotingDesc(e.target.value);
-                            }}
-                            placeholder="Describe why you need the funds"
-                        />
-                    </TextInputGroup>
-                    <CreateProjModalBottom>
-                        <FullFlexDiv>
-                            <TextInputGroup>
-                                <span>Required Amount in MATIC</span>
-                                <CustomInput
-                                    value={requestAmount}
-                                    onChange={(e) => {
-                                        setRequestAmount(e.target.value);
-                                    }}
-                                    type="text"
-                                    placeholder="₹"
-                                />
-                            </TextInputGroup>
-                        </FullFlexDiv>
-                        <BecomeMemberBtn onClick={initiateVotingForRequest}>
-                            Request
-                        </BecomeMemberBtn>
-                    </CreateProjModalBottom>
-                </CreateProjModalContainer>
-            </Modal>
             <Sidebar />
             <CreatorPageContainer>
                 <Navbar title={"CRYPTS"} />
@@ -820,7 +565,7 @@ const CryptsPage = () => {
                     <FeedSection>
                         <SectionHeader>Claimables ✨</SectionHeader>
                         <ClaimablesList>
-                            <ClaimCard>{claimAmount} MATIC</ClaimCard>
+                            <ClaimCard onClick={handleClaimAmount}>{claimAmount} MATIC<br/>Claim Now</ClaimCard>
                         </ClaimablesList>
                     </FeedSection>
                 </FeedContainer>

@@ -1,4 +1,4 @@
 import fund from "../artifacts/contracts/crowd_funding.sol/crowd_funding.json"
 
-export const ContractAddress = "0xC4a30c3871deE8415D89957A122750F1F57fdd56";
+export const ContractAddress = "0xBD6Ffe67F74D21C328dF94DEF66D5938cF62AE31";
 export const ContractABI = fund.abi;
