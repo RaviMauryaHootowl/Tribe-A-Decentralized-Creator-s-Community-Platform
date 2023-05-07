@@ -113,6 +113,7 @@ const Navbar = ({title}) => {
     }, [state.user]);
 
     const toggleDropdown = () => {
+        fetchAccountBalance();
         setIsDropdownOpen(!isDropdownOpen);
     }
 
@@ -133,8 +134,7 @@ const Navbar = ({title}) => {
         );
 
         const balance = await rpcProvider.getBalance(state.user.walletAddress);
-        console.log(balance);
-        setAccBalance((parseInt(balance.toString())/10e18).toFixed(4));
+        setAccBalance((parseInt(balance.toString())/1e18).toFixed(4));
     }
 
     const copyWalletAddress = () => {

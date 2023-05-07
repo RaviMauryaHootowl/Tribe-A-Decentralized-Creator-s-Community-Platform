@@ -1,7 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { BeatLoader } from "react-spinners";
 import { StoreContext } from "../../utils/Store";
-import { notifyPromise, notifyResolve } from "../../utils/notify";
 import { magicLogin } from "../../utils/user";
 import { useNavigate } from "react-router-dom";
 import { CircularProgress } from "@mui/material";
@@ -31,17 +30,14 @@ const RedirectCreator = () => {
     useEffect(() => {
         const getRedirectResult = async () => {
             console.log('getting redirect')
-            const notifyId = notifyPromise('Verifying Credentials...', 'info');
             try {
                 const result = await state.magic.oauth.getRedirectResult();
                 console.log(result)
                 const idToken = await state.magic.user.getIdToken();
-                notifyResolve(notifyId, 'Credentials Verified', 'success');
                 setUserInfo(result.oauth.userInfo);
                 setDid(idToken);
             } catch (error) {
                 console.log(error)
-                notifyResolve(notifyId, 'Error verifying credentials', 'error');
             }
         }
         if (!state.magic) return;

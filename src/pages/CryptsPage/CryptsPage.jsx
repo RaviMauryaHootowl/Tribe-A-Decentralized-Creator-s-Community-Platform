@@ -513,7 +513,7 @@ const CryptsPage = () => {
             const resFromSC = await contractInstance.viewClaimAmount(state.user.walletAddress);
     
             console.log(resFromSC);
-            setClaimAmount(parseInt(resFromSC.toString()) / 10e18);
+            setClaimAmount(parseInt(resFromSC.toString()) / 1e18);
         } catch(e){
             console.log(e);
         }

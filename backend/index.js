@@ -3,7 +3,10 @@ const cors = require("cors");
 const axios = require("axios");
 const app = express();
 const bodyParser = require("body-parser");
+const uploadImage = require("./controllers/uploadImage.js");
 require("dotenv").config();
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' })
 
 app.use(cors());
 app.use(
@@ -17,6 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 // import routes
 const userRouter = require("./routes/user");
 const mongoose = require("mongoose");
+const { uploadImageController } = require("./controllers/user.js");
 
 mongoose.connect(process.env.MONGO_URI);
 
@@ -31,6 +35,9 @@ const allowCORS = (req, res, next) => {
 };
 
 app.use("/user", userRouter);
+
+app.post("/uploadImage", upload.single('image'), uploadImageController);
+
 
 app.get("/", (req, res) => {
     console.log(req);

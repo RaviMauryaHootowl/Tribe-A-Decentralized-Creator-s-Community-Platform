@@ -16,6 +16,8 @@ import { ethers } from "ethers";
 import { ContractABI, ContractAddress } from "../../utils/constants";
 import Sidebar from "../../components/Sidebar";
 import Navbar from "../../components/Navbar";
+import { toast } from "react-toastify";
+import WhiteLoader from "../../components/WhiteLoader";
 
 const createProjectModalStyles = {
     content: {
@@ -116,9 +118,12 @@ const ProfilePicContainer = styled.div`
     width: 200px;
 `;
 
-const ProfilePic = styled.img`
+const ProfilePic = styled.div`
     height: 200px;
     width: 200px;
+    background-image: url("${props => props.src}");
+    background-position: center;
+    background-size: cover;
     border-radius: 50%;
     position: absolute;
     top: -100px;
@@ -157,18 +162,32 @@ const CoverMilestoneStat = styled.div`
 
 const MilestoneMeter = styled.div`
     width: 120px;
-    height: 5px;
+    height: 30px;
     background-color: white;
     display: flex;
     flex-direction: row;
-    align-items: stretch;
-    border-radius: 5px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 15px;
     overflow: hidden;
+    margin: 0.2rem 0;
+    overflow: hidden;
+    position: relative;
+`;
+
+const MilestoneMeterLabel = styled.div`
+    color: black;
+    font-weight: bold;
+    z-index: 100;
 `;
 
 const FilledMeter = styled.div`
-    width: ${props => props.percent}%;
-    background-color: #1e5ed9;
+    position: absolute;
+    left: 0;
+    width: calc(${props => props.percent}*1.2px);
+    height: 30px;
+    background-color: #7da8f7;
+    border-radius: 15px;
 `;
 
 const FeedContainer = styled.div`
@@ -441,6 +460,7 @@ const CreateProjModalBottom = styled.div`
     width: 100%;
     display: flex;
     align-items: center;
+    justify-content: center;
 `;
 
 
@@ -462,6 +482,7 @@ const CreatorFeed = ({match}) => {
     const [isMember, setIsMember] = useState(false);
     const [milestoneInfo, setMilestoneInfo] = useState({});
     const [votingInfo, setVotingInfo] = useState({});
+    const [isBecomeMemberLoading, setIsBecomeMemberLoading] = useState(false);
 
     useEffect(() => {
         console.log(state.user);
@@ -499,6 +520,7 @@ const CreatorFeed = ({match}) => {
 
     const handleBecomeMember = async () => {
         try{
+            setIsBecomeMemberLoading(true);
             const magic = new Magic(process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY, {
                 network: {
                   rpcUrl: process.env.REACT_APP_RPC_URL,
@@ -534,10 +556,12 @@ const CreatorFeed = ({match}) => {
             console.log(res.data);
             closeBecomeMemberModal();
             fetchCreatorInfo(params.id);
-            alert("Became member");
+            setIsBecomeMemberLoading(false);
+            toast.success("Congrats! You're now a member!");
         }catch(e){
             console.log(e);
-            
+            setIsBecomeMemberLoading(false);
+            toast.error("We ran into an error. Make sure you have sufficient funds in your wallet");
         }
         
     }
@@ -567,9 +591,9 @@ const CreatorFeed = ({match}) => {
             resFromSC = await contractInstance.getMilestoneDetails(creatorWalletAddress);
 
             setMilestoneInfo({
-                milestoneNum : resFromSC.milestoneNo.toString(),
-                goal: resFromSC.goal.toString(),
-                fundsRaised: resFromSC.fundsRaised.toString()
+                milestoneNum : parseInt(resFromSC.milestoneNo.toString()),
+                goal: parseInt(resFromSC.goal.toString())/1e18,
+                fundsRaised: parseInt(resFromSC.fundsRaised.toString())/1e18
             });
         }catch(e){
             console.log(e);
@@ -710,7 +734,9 @@ const CreatorFeed = ({match}) => {
                         />
                     </TextInputGroup>
                     <CreateProjModalBottom>
-                        <BecomeMemberBtn onClick={handleBecomeMember}>Join</BecomeMemberBtn>
+                        <BecomeMemberBtn onClick={handleBecomeMember}>{
+                            isBecomeMemberLoading ? <WhiteLoader label={"Confirming..."} /> : "Join"
+                        }</BecomeMemberBtn>
                     </CreateProjModalBottom>
                 </CreateProjModalContainer>
             </Modal>
@@ -812,14 +838,18 @@ const CreatorFeed = ({match}) => {
                         <InfoContainer>
                             <CoverCreatorName>{creatorInfo.fullName}</CoverCreatorName>
                             <CoverStatsContainer>
-                                <CoverStat>612 members</CoverStat>
-                                <CoverStat>1.5K followers</CoverStat>
+                                <CoverStat>{creatorInfo.members ? creatorInfo.members.length : "0"} members</CoverStat>
+                                {/* <CoverStat>{creatorInfo.walletAddress.substring(0, 7)}..{creatorInfo.walletAddress.slice(-5)}</CoverStat> */}
                             </CoverStatsContainer>
                         </InfoContainer>
                         {
                             milestoneInfo.goal && <CoverMilestoneStat>
                             <MilestoneMeter>
-                                <FilledMeter percent={parseInt(milestoneInfo.fundsRaised) * 100 / parseInt(milestoneInfo.goal)}></FilledMeter>
+                                <FilledMeter percent={milestoneInfo.fundsRaised * 100 / milestoneInfo.goal}>
+                                </FilledMeter>
+                                <MilestoneMeterLabel>
+                                {milestoneInfo.fundsRaised} / {milestoneInfo.goal}
+                                </MilestoneMeterLabel>
                             </MilestoneMeter>
                             Milestone: {milestoneInfo.milestoneNum}
                         </CoverMilestoneStat>
@@ -859,7 +889,10 @@ const CreatorFeed = ({match}) => {
                     <FeedSection>
                         <SectionHeader>
                             <span>PROJECTS</span>
+                            {
+                                state.user.isCreator && 
                             <SectionHeaderActionBtn onClick={openCreateProjectModal}><Add /> Create Project</SectionHeaderActionBtn>
+                            }
                         </SectionHeader>
                         <WorkListContainer>
                             <ProjectsCard>

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import logo from "../../images/logo.svg";
 import cover from "../../images/cover.png";
@@ -12,7 +12,7 @@ import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartm
 import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
 import SettingsSuggestRoundedIcon from "@mui/icons-material/SettingsSuggestRounded";
 import Modal from "react-modal";
-import { Add, CloseOutlined, UploadFile } from "@mui/icons-material";
+import { Add, CloseOutlined, UploadFile, UploadFileOutlined } from "@mui/icons-material";
 import { StoreContext } from "../../utils/Store";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
@@ -26,6 +26,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { CircularProgress } from "@mui/material";
 import WhiteLoader from "../../components/WhiteLoader";
+import { useDropzone } from "react-dropzone";
 
 const createProjectModalStyles = {
     content: {
@@ -457,6 +458,34 @@ const SetupMessageBtn = styled.button`
     }
 `;
 
+const baseStyle = {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    padding: "20px",
+    borderWidth: "2px",
+    borderRadius: "1rem",
+    borderColor: "#E3E3E3",
+    backgroundColor: "#4b4b4b56",
+    color: "#6e6e6e",
+    outline: "none",
+    transition: "border .24s ease-in-out",
+    cursor: "pointer",
+};
+
+const focusedStyle = {
+    borderColor: "#2196f3",
+};
+
+const acceptStyle = {
+    borderColor: "#00e676",
+};
+
+const rejectStyle = {
+    borderColor: "#ff1744",
+};
+
 const Dashboard = () => {
     const { state, dispatch } = useContext(StoreContext);
     const navigate = useNavigate();
@@ -464,6 +493,7 @@ const Dashboard = () => {
     const [cdName, setCdName] = useState("");
     const [cdDesc, setCdDesc] = useState("");
     const [cdProfilePicURL, setCdProfilePicURL] = useState("");
+    const [cdProfilePicFile, setCdProfilePicFile] = useState(null);
     const [cdSocialURL, setCdSocialURL] = useState("");
     const [cdMilestone, setCdMilestone] = useState("");
     const [votingName, setVotingName] = useState("");
@@ -495,6 +525,32 @@ const Dashboard = () => {
     const openCreatorSetupModal = () => {
         setIsCreatorSetupModalOpen(true);
     };
+
+    const onDrop = useCallback(
+        (acceptedFiles) => {
+            setCdProfilePicFile(acceptedFiles[0]);
+        },
+        [cdProfilePicFile]
+    );
+
+    const {
+        acceptedFiles,
+        getRootProps,
+        getInputProps,
+        isFocused,
+        isDragAccept,
+        isDragReject,
+    } = useDropzone({ onDrop });
+
+    const style = useMemo(
+        () => ({
+            ...baseStyle,
+            ...(isFocused ? focusedStyle : {}),
+            ...(isDragAccept ? acceptStyle : {}),
+            ...(isDragReject ? rejectStyle : {}),
+        }),
+        [isFocused, isDragAccept, isDragReject]
+    );
 
     const getVotingStatus = async () => {
         const magic = new Magic(
@@ -615,15 +671,30 @@ const Dashboard = () => {
         console.log(resFromSC);
     };
 
+    const toBase64 = file => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+    });
+
     const saveCreatorDetails = async () => {
         if (
             isValid(cdName) &&
             isValid(cdDesc) &&
-            isValid(cdProfilePicURL) &&
+            cdProfilePicFile != null &&
             isValid(cdSocialURL) &&
             isValid(cdMilestone)
         ) {
             try {
+
+                //first upload file
+                // const base64Image = await toBase64(cdProfilePicFile);
+                const data = new FormData();
+                data.append("image", cdProfilePicFile);
+                const imageUploadRes = await axios.post(`${process.env.REACT_APP_API}/uploadImage`, data);
+                console.log(imageUploadRes);
+
                 setCreatorDetailsSaveLoading(true);
                 const milestoneInWei = ethers.utils.parseEther(
                     `${cdMilestone}`
@@ -666,7 +737,7 @@ const Dashboard = () => {
                         emailId: state.user.emailId,
                         name: cdName,
                         description: cdDesc,
-                        profilePic: cdProfilePicURL,
+                        profilePic: imageUploadRes.data,
                         socialUrl: cdSocialURL,
                     }
                 );
@@ -717,14 +788,24 @@ const Dashboard = () => {
                     </TextInputGroup>
                     <TextInputGroup>
                         <span>Profile Picture URL</span>
-                        <CustomInput
-                            value={cdProfilePicURL}
+                        <div {...getRootProps({ style })}>
+                                <input {...getInputProps()} />
+                                <UploadFileOutlined />
+                                <p>
+                                    {cdProfilePicFile != null
+                                        ? `${cdProfilePicFile.path.substring(
+                                              0,
+                                              Math.min(cdProfilePicFile.path.length, 10)
+                                          )}...`
+                                        : "Upload image"}
+                                </p>
+                            </div>
+                        {/* <CustomInput
+                            type="file"
                             onChange={(e) => {
-                                setCdProfilePicURL(e.target.value);
+                                setCdProfilePicFile(e.target.files[0]);
                             }}
-                            type="text"
-                            placeholder="www.asdf.com/imageurl"
-                        />
+                        /> */}
                     </TextInputGroup>
                     <TextInputGroup>
                         <span>Social Media URL</span>

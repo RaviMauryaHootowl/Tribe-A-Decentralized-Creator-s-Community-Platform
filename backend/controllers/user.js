@@ -2,6 +2,8 @@ const { Magic } = require('@magic-sdk/admin');
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const Creator = require('../models/Creator');
+const uploadImage = require('./uploadImage');
+const fs = require("fs");
 
 exports.magicLoginUser = async (req, res) => {
     console.log('magic login')
@@ -196,5 +198,19 @@ exports.updateVotingInfo = async (req, res) => {
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: error });
+    }
+}
+
+exports.uploadImageController = async (req, res) => {
+    try{
+        const { file } = req;
+        console.log(file);
+        const resImg = await uploadImage(file.path);
+        fs.unlink(file.path, (err) => {
+            console.log(err);
+        });
+        res.send(resImg.secure_url);
+    }catch(e){
+        res.status(500).send(e);
     }
 }
