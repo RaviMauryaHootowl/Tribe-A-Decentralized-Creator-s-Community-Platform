@@ -23,6 +23,9 @@ import { ContractABI, ContractAddress } from "../../utils/constants";
 import Sidebar from "../../components/Sidebar";
 import { isValid } from "../../utils/utils";
 import axios from "axios";
+import { toast } from "react-toastify";
+import { CircularProgress } from "@mui/material";
+import WhiteLoader from "../../components/WhiteLoader";
 
 const createProjectModalStyles = {
     content: {
@@ -406,6 +409,7 @@ const CreateProjModalBottom = styled.div`
     width: 100%;
     display: flex;
     align-items: center;
+    justify-content: center;
 `;
 
 const FullFlexDiv = styled.div`
@@ -464,6 +468,7 @@ const Dashboard = () => {
     const [cdMilestone, setCdMilestone] = useState("");
     const [votingName, setVotingName] = useState("");
     const [votingDesc, setVotingDesc] = useState("");
+    const [creatorDetailsSaveLoading, setCreatorDetailsSaveLoading] = useState(false);
 
     useEffect(() => {
         console.log(state.user);
@@ -619,6 +624,7 @@ const Dashboard = () => {
             isValid(cdMilestone)
         ) {
             try {
+                setCreatorDetailsSaveLoading(true);
                 const milestoneInWei = ethers.utils.parseEther(
                     `${cdMilestone}`
                 );
@@ -665,8 +671,12 @@ const Dashboard = () => {
                     }
                 );
                 console.log(res.data);
+                setCreatorDetailsSaveLoading(false);
+                toast.success('Creator details saved! 🥳');
                 closeCreatorSetupModal();
             } catch (e) {
+                setCreatorDetailsSaveLoading(false);
+                toast.error('Failed to save details!');
                 console.log(e);
             }
         } else {
@@ -739,8 +749,10 @@ const Dashboard = () => {
                         />
                     </TextInputGroup>
                     <CreateProjModalBottom>
-                        <BecomeMemberBtn onClick={saveCreatorDetails}>
-                            Save
+                        <BecomeMemberBtn disabled={creatorDetailsSaveLoading} onClick={saveCreatorDetails}>
+                            {
+                                !creatorDetailsSaveLoading ? "Save" : <WhiteLoader label={"Saving..."}/>
+                            }
                         </BecomeMemberBtn>
                     </CreateProjModalBottom>
                 </CreateProjModalContainer>

@@ -1,5 +1,7 @@
+import { ToastContainer } from 'react-toastify';
 import { createClient, configureChains, defaultChains, WagmiConfig } from 'wagmi';
 import { publicProvider } from 'wagmi/providers/public';
+import 'react-toastify/dist/ReactToastify.css';
 
 const WagmiProvider = ({ children }) => {
 
@@ -13,6 +15,7 @@ const WagmiProvider = ({ children }) => {
     
     return (
         <WagmiConfig client={client}>
+            <ToastContainer theme='dark' position="bottom-center"></ToastContainer>
             {children}
         </WagmiConfig >
     );

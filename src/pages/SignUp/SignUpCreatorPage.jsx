@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import styled from "styled-components";
 import logo from "../../images/logo.svg";
+import headerbg from "../../images/headerbg.png";
 import googleLogo from "../../images/googleLogo.png";
 import orDividerImg from "../../images/orDivider.svg";
 import { StoreContext } from "../../utils/Store";
@@ -13,7 +14,9 @@ const SignUpPageContainer = styled.div`
 
 const SignUpHeroSection = styled.div`
     width: 100%;
-    background-color: #19181d;
+    background-image: url(${headerbg});
+    background-size: cover;
+    background-position: center;
     padding: 5rem 2rem;
     color: white;
     display: flex;
@@ -33,7 +36,7 @@ const SubHeaderSpan = styled.span`
 
 const SignUpContentSection = styled.div`
     width: 100%;
-    padding: 2rem;
+    padding: 4rem 2rem;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -161,35 +164,6 @@ const SignUpCreatorPage = () => {
                 <SignUpGoogleButton onClick={googleLoginHandler}>
                     Sign Up with <GoogleLogo src={googleLogo} />
                 </SignUpGoogleButton>
-                <OrDivider src={orDividerImg} />
-                <TextInputGroup>
-                    <span>Email ID</span>
-                    <CustomInput
-                        type="text"
-                        name=""
-                        id=""
-                        placeholder="cutiepie@email.com"
-                    />
-                </TextInputGroup>
-                <TextInputGroup>
-                    <span>Full Name</span>
-                    <CustomInput
-                        type="text"
-                        name=""
-                        id=""
-                        placeholder="Cutie Pie"
-                    />
-                </TextInputGroup>
-                <TextInputGroup>
-                    <span>New Password</span>
-                    <CustomInput
-                        type="password"
-                        name=""
-                        id=""
-                        placeholder="*****"
-                    />
-                </TextInputGroup>
-                <SignUpButton>Let's Go</SignUpButton>
             </SignUpContentSection>
         </SignUpPageContainer>
     );

@@ -1,22 +1,26 @@
 import React, { useContext } from "react";
 import styled from "styled-components";
 import logo from "../../images/logo.svg";
-import headerbg from "../../images/headerbg.png";
-import googleLogo from "../../images/googleLogo.png";
+import landingbg from "../../images/landingbg.png";
 import orDividerImg from "../../images/orDivider.svg";
 import { StoreContext } from "../../utils/Store";
+import { useNavigate } from "react-router-dom";
+import { CircularProgress } from "@mui/material";
 
-const SignUpPageContainer = styled.div`
+const LandingPageContainer = styled.div`
     width: 100%;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
-`;
-
-const SignUpHeroSection = styled.div`
-    width: 100%;
-    background-image: url(${headerbg});
+    align-items: center;
+    justify-content: center;
+    background-image: url(${landingbg});
     background-size: cover;
     background-position: center;
+`;
+
+const LandingPageHeader = styled.div`
+    width: 100%;
     padding: 5rem 2rem;
     color: white;
     display: flex;
@@ -36,7 +40,7 @@ const SubHeaderSpan = styled.span`
 
 const SignUpContentSection = styled.div`
     width: 100%;
-    padding: 4rem 2rem;
+    padding: 2rem;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -133,8 +137,48 @@ const SignUpButton = styled.button`
     }
 `;
 
-const SignUpPage = () => {
+const ActionsContainer = styled.div`
+    display: flex;
+    align-items: center;
+`;
+
+const ActionButtonCreator = styled.button`
+    padding: 1rem 2rem;
+    margin: 0.5rem;
+    background-color: transparent;
+    outline: none;
+    border: none;
+    color: white;
+    font-size: 1.3rem;
+    cursor: pointer;
+    &:hover{
+        text-decoration: underline;
+        color: #F423BA;
+        text-decoration-color: #F423BA;
+        text-decoration-thickness: 4px;
+    }
+`;
+
+const ActionButtonUser = styled.button`
+    padding: 1rem 2rem;
+    margin: 0.5rem;
+    background-color: transparent;
+    outline: none;
+    border: none;
+    color: white;
+    font-size: 1.3rem;
+    cursor: pointer;
+    &:hover{
+        text-decoration: underline;
+        color: #1E5ED9;
+        text-decoration-color: #1E5ED9;
+        text-decoration-thickness: 4px;
+    }
+`;
+
+const LandingPage = () => {
     const { state, dispatch } = useContext(StoreContext);
+    const navigate = useNavigate();
 
     const googleLoginHandler = async (e) => {
         e.preventDefault();
@@ -146,27 +190,25 @@ const SignUpPage = () => {
     };
 
     return (
-        <SignUpPageContainer>
-            <SignUpHeroSection>
+        <LandingPageContainer>
+            <LandingPageHeader>
                 <SignUpAppLogo src={logo} />
                 <SubHeaderSpan>
-                    A secure platform for Independent
+                    A secure, self-sustaining and decentralized platform
                     <br />
-                    creators to build a healthy community!
+                    for Independent creators to build a healthy community!
                 </SubHeaderSpan>
-            </SignUpHeroSection>
-            <SignUpContentSection>
-                <SignUpFormHeading>
-                    Are you a Content Consumer?
-                    <br />
-                    Join your community
-                </SignUpFormHeading>
-                <SignUpGoogleButton onClick={googleLoginHandler}>
-                    Sign Up with <GoogleLogo src={googleLogo} />
-                </SignUpGoogleButton>
-            </SignUpContentSection>
-        </SignUpPageContainer>
+                <ActionsContainer>
+                    <ActionButtonCreator onClick={() => {
+                        navigate('/signupCreator')
+                    }}>Creator</ActionButtonCreator>
+                    <ActionButtonUser onClick={() => {
+                        navigate('/signup')
+                    }}>User</ActionButtonUser>
+                </ActionsContainer>
+            </LandingPageHeader>
+        </LandingPageContainer>
     );
 };
 
-export default SignUpPage;
+export default LandingPage;

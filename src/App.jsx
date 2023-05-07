@@ -12,9 +12,14 @@ import SignUpCreatorPage from "./pages/SignUp/SignUpCreatorPage";
 import RedirectCreator from "./pages/Redirect/RedirectCreator";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import CryptsPage from "./pages/CryptsPage/CryptsPage";
+import LandingPage from "./pages/LandingPage/LandingPage";
 
 const App = () => {
     const router = createBrowserRouter([
+        {
+            path: "/",
+            element: <LandingPage />,
+        },
         {
             path: "/home",
             element: <Home />,
@@ -57,7 +62,7 @@ const App = () => {
         <GoogleOAuthProvider clientId={process.env.GOOGLE_CLIENT_ID}>
             <StoreProvider>
                 <WagmiProvider>
-                    <RouterProvider router={router}></RouterProvider>
+                        <RouterProvider router={router}></RouterProvider>
                 </WagmiProvider>
             </StoreProvider>
         </GoogleOAuthProvider>

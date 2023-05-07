@@ -137,7 +137,6 @@ export const connectToMetamask = async (dispatch) => {
 
 export const magicLogin = async (state, dispatch, did, userInfo, isCreator) => {
     console.log('magic loggin in', did, userInfo);
-    const notifyId = notifyPromise('Hashcase Wallet Logging in...', 'info');
     try {
         const API_URL_SUFFIX = isCreator ? 'magicLoginCreator' : 'magicLoginUser';
         const userBackend = await axios.post(`${process.env.REACT_APP_API}/user/${API_URL_SUFFIX}`, {
@@ -192,18 +191,8 @@ export const magicLogin = async (state, dispatch, did, userInfo, isCreator) => {
             time: inThirtyMins,
         });
         Cookies.set('jwt', userBackend.data.token);
-        if (userBackend.data.isNewUser) {
-            notifyResolve(notifyId, 'Welcome to Creators Community!', 'success');
-        } else {
-            notifyResolve(notifyId, 'Logged in!', 'success');
-        }
         return true;
     } catch (error) {
-        if (error?.response?.data?.message) {
-            notifyResolve(notifyId, error?.response?.data?.message, 'error');
-        } else {
-            notifyResolve(notifyId, error.message, 'error');
-        }
         return false;
     }
 }

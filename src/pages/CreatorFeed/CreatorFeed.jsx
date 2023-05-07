@@ -15,6 +15,7 @@ import { OAuthExtension } from "@magic-ext/oauth";
 import { ethers } from "ethers";
 import { ContractABI, ContractAddress } from "../../utils/constants";
 import Sidebar from "../../components/Sidebar";
+import Navbar from "../../components/Navbar";
 
 const createProjectModalStyles = {
     content: {
@@ -705,7 +706,7 @@ const CreatorFeed = ({match}) => {
                             type="number"
                             name=""
                             id=""
-                            placeholder="1 Crypt = 10₹"
+                            placeholder="1 Crypt = 1 MATIC"
                         />
                     </TextInputGroup>
                     <CreateProjModalBottom>
@@ -802,6 +803,7 @@ const CreatorFeed = ({match}) => {
             <Sidebar />
             <CreatorPageContainer>
                 <CoverImageContainer>
+                    <Navbar />
                     <CoverTopActions></CoverTopActions>
                     <CoverCreatorInfoContainer>
                         <ProfilePicContainer>

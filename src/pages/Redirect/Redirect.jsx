@@ -4,7 +4,22 @@ import { StoreContext } from "../../utils/Store";
 import { notifyPromise, notifyResolve } from "../../utils/notify";
 import { magicLogin } from "../../utils/user";
 import { useNavigate } from "react-router-dom";
+import styled from "styled-components";
+import { CircularProgress } from "@mui/material";
 
+const RedirectPageContainer = styled.div`
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    span{
+        margin-top: 1rem;
+        color: white;
+        font-size: 1.1rem;
+    }
+`;
 
 const Redirect = () => {
     const navigate = useNavigate();
@@ -44,15 +59,15 @@ const Redirect = () => {
             navigate('/home');
         } else {
             console.log('login failed')
-            navigate('/signup');
+            navigate('/');
         }
     }
 
     return (
-        <div className="flex items-center justify-center h-screen">
-            {/* <LoadingModal showModal={true} /> */}
-            <BeatLoader size={40} color="#04A6E7"/>
-        </div>
+        <RedirectPageContainer>
+            <CircularProgress size={90} thickness={2} style={{color: "#F423BA"}}/>
+            <span>Creating a secure Web3 wallet...</span>
+        </RedirectPageContainer>
     )
 }
 
