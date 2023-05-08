@@ -4,6 +4,7 @@ import styled from "styled-components";
 
 const LoadingContainer = styled.div`
     display: flex;
+    color: white;
     span{
         margin-right: 0.5rem;
     }

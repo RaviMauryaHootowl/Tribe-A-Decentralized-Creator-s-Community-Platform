@@ -121,7 +121,7 @@ const ProfilePicContainer = styled.div`
 const ProfilePic = styled.div`
     height: 200px;
     width: 200px;
-    background-image: url("${props => props.src}");
+    background-image: url("${(props) => props.src}");
     background-position: center;
     background-size: cover;
     border-radius: 50%;
@@ -184,7 +184,7 @@ const MilestoneMeterLabel = styled.div`
 const FilledMeter = styled.div`
     position: absolute;
     left: 0;
-    width: calc(${props => props.percent}*1.2px);
+    width: calc(${(props) => props.percent}*1.2px);
     height: 30px;
     background-color: #7da8f7;
     border-radius: 15px;
@@ -389,12 +389,21 @@ const VoteBarContainer = styled.div`
     height: 8px;
     width: 100%;
     background-color: white;
+    border-radius: 50vh;
 `;
 
 const VoteBarFilled = styled.div`
     height: 8px;
-    width: ${props => props.percent}%;
-    background-color: green;
+    width: ${(props) => props.percent}%;
+    background-color: #2ecc71;
+    border-radius: 50vh;
+`;
+
+const VoteBarFilledRed = styled.div`
+    height: 8px;
+    width: ${(props) => props.percent}%;
+    background-color: #e74c3c;
+    border-radius: 50vh;
 `;
 
 const VotingModalActions = styled.div`
@@ -463,12 +472,11 @@ const CreateProjModalBottom = styled.div`
     justify-content: center;
 `;
 
-
 const FullFlexDiv = styled.div`
     flex: 1;
 `;
 
-const CreatorFeed = ({match}) => {
+const CreatorFeed = ({ match }) => {
     const params = useParams();
     const { state, dispatch } = useContext(StoreContext);
     const [creatorInfo, setCreatorInfo] = useState({});
@@ -476,13 +484,13 @@ const CreatorFeed = ({match}) => {
         useState(false);
     const [isBecomeMemberModalOpen, setIsBecomeMemberModalOpen] =
         useState(false);
-    const [isVoteModalOpen, setIsVoteModalOpen] =
-        useState(false);
+    const [isVoteModalOpen, setIsVoteModalOpen] = useState(false);
     const [becomeMemberValue, setBecomeMemberValue] = useState();
     const [isMember, setIsMember] = useState(false);
     const [milestoneInfo, setMilestoneInfo] = useState({});
     const [votingInfo, setVotingInfo] = useState({});
     const [isBecomeMemberLoading, setIsBecomeMemberLoading] = useState(false);
+    const [isVotingLoading, setIsVotingLoading] = useState(false);
 
     useEffect(() => {
         console.log(state.user);
@@ -495,18 +503,20 @@ const CreatorFeed = ({match}) => {
 
     useEffect(() => {
         console.log(milestoneInfo);
-    }, [milestoneInfo])
-    
+    }, [milestoneInfo]);
+
     const fetchCreatorInfo = async (id) => {
         try {
             const res = await axios.get(
                 `${process.env.REACT_APP_API}/user/getCreatorInfo?walletAddress=${id}`
             );
             console.log(res.data);
-            const memberFind = res.data.members.find(o => o.emailId == state.user.emailId);
-            if(memberFind){
+            const memberFind = res.data.members.find(
+                (o) => o.emailId == state.user.emailId
+            );
+            if (memberFind) {
                 setIsMember(true);
-            }else{
+            } else {
                 setIsMember(false);
             }
             setCreatorInfo(res.data);
@@ -516,22 +526,27 @@ const CreatorFeed = ({match}) => {
             console.log(err);
             setCreatorInfo({});
         }
-    }
+    };
 
     const handleBecomeMember = async () => {
-        try{
+        try {
             setIsBecomeMemberLoading(true);
-            const magic = new Magic(process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY, {
-                network: {
-                  rpcUrl: process.env.REACT_APP_RPC_URL,
-                  chainId: 80001
-                },
-                extensions: [new OAuthExtension()],
-            });
-    
+            const magic = new Magic(
+                process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
+                {
+                    network: {
+                        rpcUrl: process.env.REACT_APP_RPC_URL,
+                        chainId: 80001,
+                    },
+                    extensions: [new OAuthExtension()],
+                }
+            );
+
             console.log(magic);
-        
-            const rpcProvider = new ethers.providers.Web3Provider(magic.rpcProvider);
+
+            const rpcProvider = new ethers.providers.Web3Provider(
+                magic.rpcProvider
+            );
             const signer = rpcProvider.getSigner();
             const contractInstance = new ethers.Contract(
                 ContractAddress,
@@ -539,18 +554,23 @@ const CreatorFeed = ({match}) => {
                 signer
             );
             console.log(contractInstance);
-    
+
             let resFromSC;
-            const options = {value: ethers.utils.parseEther(`${becomeMemberValue}`)}
-            resFromSC = await contractInstance.contribute(creatorInfo.walletAddress, options);
-    
+            const options = {
+                value: ethers.utils.parseEther(`${becomeMemberValue}`),
+            };
+            resFromSC = await contractInstance.contribute(
+                creatorInfo.walletAddress,
+                options
+            );
+
             console.log(resFromSC);
 
             const res = await axios.post(
                 `${process.env.REACT_APP_API}/user/joinMembership`,
                 {
                     emailIdCreator: creatorInfo.emailId,
-                    emailId: state.user.emailId
+                    emailId: state.user.emailId,
                 }
             );
             console.log(res.data);
@@ -558,27 +578,33 @@ const CreatorFeed = ({match}) => {
             fetchCreatorInfo(params.id);
             setIsBecomeMemberLoading(false);
             toast.success("Congrats! You're now a member!");
-        }catch(e){
+        } catch (e) {
             console.log(e);
             setIsBecomeMemberLoading(false);
-            toast.error("We ran into an error. Make sure you have sufficient funds in your wallet");
+            toast.error(
+                "We ran into an error. Make sure you have sufficient funds in your wallet"
+            );
         }
-        
-    }
+    };
 
     const getMilestoneDetails = async (creatorWalletAddress) => {
-        try{
-            const magic = new Magic(process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY, {
-                network: {
-                  rpcUrl: process.env.REACT_APP_RPC_URL,
-                  chainId: 80001
-                },
-                extensions: [new OAuthExtension()],
-            });
-    
+        try {
+            const magic = new Magic(
+                process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
+                {
+                    network: {
+                        rpcUrl: process.env.REACT_APP_RPC_URL,
+                        chainId: 80001,
+                    },
+                    extensions: [new OAuthExtension()],
+                }
+            );
+
             console.log(magic);
-        
-            const rpcProvider = new ethers.providers.Web3Provider(magic.rpcProvider);
+
+            const rpcProvider = new ethers.providers.Web3Provider(
+                magic.rpcProvider
+            );
             const signer = rpcProvider.getSigner();
             const contractInstance = new ethers.Contract(
                 ContractAddress,
@@ -586,33 +612,40 @@ const CreatorFeed = ({match}) => {
                 signer
             );
             console.log(contractInstance);
-    
+
             let resFromSC;
-            resFromSC = await contractInstance.getMilestoneDetails(creatorWalletAddress);
+            resFromSC = await contractInstance.getMilestoneDetails(
+                creatorWalletAddress
+            );
 
             setMilestoneInfo({
-                milestoneNum : parseInt(resFromSC.milestoneNo.toString()),
-                goal: parseInt(resFromSC.goal.toString())/1e18,
-                fundsRaised: parseInt(resFromSC.fundsRaised.toString())/1e18
+                milestoneNum: parseInt(resFromSC.milestoneNo.toString()),
+                goal: parseInt(resFromSC.goal.toString()) / 1e18,
+                fundsRaised: parseInt(resFromSC.fundsRaised.toString()) / 1e18,
             });
-        }catch(e){
+        } catch (e) {
             console.log(e);
         }
-    }
+    };
 
     const getVoteDetails = async (creatorWalletAddress) => {
-        try{
-            const magic = new Magic(process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY, {
-                network: {
-                  rpcUrl: process.env.REACT_APP_RPC_URL,
-                  chainId: 80001
-                },
-                extensions: [new OAuthExtension()],
-            });
-    
+        try {
+            const magic = new Magic(
+                process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
+                {
+                    network: {
+                        rpcUrl: process.env.REACT_APP_RPC_URL,
+                        chainId: 80001,
+                    },
+                    extensions: [new OAuthExtension()],
+                }
+            );
+
             console.log(magic);
-        
-            const rpcProvider = new ethers.providers.Web3Provider(magic.rpcProvider);
+
+            const rpcProvider = new ethers.providers.Web3Provider(
+                magic.rpcProvider
+            );
             const signer = rpcProvider.getSigner();
             const contractInstance = new ethers.Contract(
                 ContractAddress,
@@ -620,9 +653,11 @@ const CreatorFeed = ({match}) => {
                 signer
             );
             console.log(contractInstance);
-    
+
             let resFromSC;
-            resFromSC = await contractInstance.getVotingStatus(creatorWalletAddress);
+            resFromSC = await contractInstance.getVotingStatus(
+                creatorWalletAddress
+            );
             console.log(resFromSC);
 
             const res = await axios.get(
@@ -639,34 +674,44 @@ const CreatorFeed = ({match}) => {
                 noOfVotes: parseInt(resFromSC[1].toString()),
                 upvoteCount: upVoteCount,
                 downvoteCount: downVoteCount,
-                percentUp: (upVoteCount + downVoteCount != 0) ? upVoteCount * 100 / (upVoteCount + downVoteCount) : 0,
-                percentDown: (upVoteCount + downVoteCount != 0) ? downVoteCount * 100 / (upVoteCount + downVoteCount) : 0,
-                amount: parseInt(resFromSC[4].toString())
+                percentUp:
+                    upVoteCount + downVoteCount != 0
+                        ? (upVoteCount * 100) / (upVoteCount + downVoteCount)
+                        : 0,
+                percentDown:
+                    upVoteCount + downVoteCount != 0
+                        ? (downVoteCount * 100) / (upVoteCount + downVoteCount)
+                        : 0,
+                amount: parseInt(resFromSC[4].toString()),
             });
-            
-        }catch(e){
+        } catch (e) {
             console.log(e);
-            
         }
-    }
+    };
 
     useEffect(() => {
         console.log(votingInfo);
-    },[votingInfo]);
+    }, [votingInfo]);
 
     const castVote = async (isTrue) => {
-        try{
-            const magic = new Magic(process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY, {
-                network: {
-                  rpcUrl: process.env.REACT_APP_RPC_URL,
-                  chainId: 80001
-                },
-                extensions: [new OAuthExtension()],
-            });
-    
+        try {
+            setIsVotingLoading(true);
+            const magic = new Magic(
+                process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
+                {
+                    network: {
+                        rpcUrl: process.env.REACT_APP_RPC_URL,
+                        chainId: 80001,
+                    },
+                    extensions: [new OAuthExtension()],
+                }
+            );
+
             console.log(magic);
-        
-            const rpcProvider = new ethers.providers.Web3Provider(magic.rpcProvider);
+
+            const rpcProvider = new ethers.providers.Web3Provider(
+                magic.rpcProvider
+            );
             const signer = rpcProvider.getSigner();
             const contractInstance = new ethers.Contract(
                 ContractAddress,
@@ -674,44 +719,47 @@ const CreatorFeed = ({match}) => {
                 signer
             );
             console.log(contractInstance);
-    
+
             let resFromSC;
-            resFromSC = await contractInstance.vote(creatorInfo.walletAddress, isTrue);
+            resFromSC = await contractInstance.vote(
+                creatorInfo.walletAddress,
+                isTrue
+            );
             resFromSC = await resFromSC.wait();
             console.log(resFromSC);
+            setIsVotingLoading(false);
+            toast.success("Your vote is recorded");
             getVoteDetails(creatorInfo.walletAddress);
-        }catch(e){
+        } catch (e) {
             console.log(e);
-            
+            toast.error("We ran into an error, try again later!");
+            setIsVotingLoading(false);
         }
-        
-    }
+    };
 
     const closeCreateProjectModal = () => {
         setIsCreateProjectModalOpen(false);
-    }
+    };
 
     const openCreateProjectModal = () => {
         setIsCreateProjectModalOpen(true);
-    }
+    };
 
     const closeBecomeMemberModal = () => {
         setIsBecomeMemberModalOpen(false);
-    }
+    };
 
     const openBecomeMemberModal = () => {
         setIsBecomeMemberModalOpen(true);
-    }
+    };
 
     const closeVoteModal = () => {
         setIsVoteModalOpen(false);
-    }
+    };
 
     const openVoteModal = () => {
-        
         setIsVoteModalOpen(true);
-    }
-
+    };
 
     return (
         <OuterFrameContainer>
@@ -726,7 +774,9 @@ const CreatorFeed = ({match}) => {
                         <span>Number of Crypts?</span>
                         <CustomInput
                             value={becomeMemberValue}
-                            onChange={(e) => {setBecomeMemberValue(e.target.value)}}
+                            onChange={(e) => {
+                                setBecomeMemberValue(e.target.value);
+                            }}
                             type="number"
                             name=""
                             id=""
@@ -734,9 +784,13 @@ const CreatorFeed = ({match}) => {
                         />
                     </TextInputGroup>
                     <CreateProjModalBottom>
-                        <BecomeMemberBtn onClick={handleBecomeMember}>{
-                            isBecomeMemberLoading ? <WhiteLoader label={"Confirming..."} /> : "Join"
-                        }</BecomeMemberBtn>
+                        <BecomeMemberBtn onClick={handleBecomeMember}>
+                            {isBecomeMemberLoading ? (
+                                <WhiteLoader label={"Confirming..."} />
+                            ) : (
+                                "Join"
+                            )}
+                        </BecomeMemberBtn>
                     </CreateProjModalBottom>
                 </CreateProjModalContainer>
             </Modal>
@@ -759,21 +813,42 @@ const CreatorFeed = ({match}) => {
                         <VoteBarView>
                             <VoteBarLabel>Yes</VoteBarLabel>
                             <VoteBarContainer>
-                                <VoteBarFilled percent={votingInfo.percentUp}></VoteBarFilled>
+                                <VoteBarFilled
+                                    percent={votingInfo.percentUp}
+                                ></VoteBarFilled>
                             </VoteBarContainer>
                             <VoteBarLabel>No</VoteBarLabel>
                             <VoteBarContainer>
-                                <VoteBarFilled percent={votingInfo.percentDown}></VoteBarFilled>
+                                <VoteBarFilledRed
+                                    percent={votingInfo.percentDown}
+                                ></VoteBarFilledRed>
                             </VoteBarContainer>
                         </VoteBarView>
                     </VoteViewContainer>
-                    {
-                        !votingInfo.hasVoted && <VotingModalActions>
-                            <BecomeMemberBtn onClick={() => {castVote(true)}}>Vote Yes</BecomeMemberBtn>
-                            <BecomeMemberBtn onClick={() => {castVote(false)}}>Vote No</BecomeMemberBtn>
+                    {!votingInfo.hasVoted && (
+                        <VotingModalActions>
+                            {isVotingLoading ? (
+                                <WhiteLoader label={"Sending..."} />
+                            ) : (
+                                <>
+                                    <BecomeMemberBtn
+                                        onClick={() => {
+                                            castVote(true);
+                                        }}
+                                    >
+                                        Vote Yes
+                                    </BecomeMemberBtn>
+                                    <BecomeMemberBtn
+                                        onClick={() => {
+                                            castVote(false);
+                                        }}
+                                    >
+                                        Vote No
+                                    </BecomeMemberBtn>
+                                </>
+                            )}
                         </VotingModalActions>
-                    }
-                    
+                    )}
                 </CreateProjModalContainer>
             </Modal>
             <Modal
@@ -803,12 +878,7 @@ const CreatorFeed = ({match}) => {
                     </TextInputGroup>
                     <TextInputGroup>
                         <span>Project Cover Image</span>
-                        <CustomInput
-                            type="text"
-                            name=""
-                            id=""
-                            placeholder=""
-                        />
+                        <CustomInput type="text" name="" id="" placeholder="" />
                     </TextInputGroup>
                     <CreateProjModalBottom>
                         <FullFlexDiv>
@@ -836,49 +906,64 @@ const CreatorFeed = ({match}) => {
                             <ProfilePic src={creatorInfo.profilePic} />
                         </ProfilePicContainer>
                         <InfoContainer>
-                            <CoverCreatorName>{creatorInfo.fullName}</CoverCreatorName>
+                            <CoverCreatorName>
+                                {creatorInfo.fullName}
+                            </CoverCreatorName>
                             <CoverStatsContainer>
-                                <CoverStat>{creatorInfo.members ? creatorInfo.members.length : "0"} members</CoverStat>
+                                <CoverStat>
+                                    {creatorInfo.members
+                                        ? creatorInfo.members.length
+                                        : "0"}{" "}
+                                    members
+                                </CoverStat>
                                 {/* <CoverStat>{creatorInfo.walletAddress.substring(0, 7)}..{creatorInfo.walletAddress.slice(-5)}</CoverStat> */}
                             </CoverStatsContainer>
                         </InfoContainer>
-                        {
-                            milestoneInfo.goal && <CoverMilestoneStat>
-                            <MilestoneMeter>
-                                <FilledMeter percent={milestoneInfo.fundsRaised * 100 / milestoneInfo.goal}>
-                                </FilledMeter>
-                                <MilestoneMeterLabel>
-                                {milestoneInfo.fundsRaised} / {milestoneInfo.goal}
-                                </MilestoneMeterLabel>
-                            </MilestoneMeter>
-                            Milestone: {milestoneInfo.milestoneNum}
-                        </CoverMilestoneStat>
-                        }
-                        
+                        {milestoneInfo.goal && (
+                            <CoverMilestoneStat>
+                                <MilestoneMeter>
+                                    <FilledMeter
+                                        percent={
+                                            (milestoneInfo.fundsRaised * 100) /
+                                            milestoneInfo.goal
+                                        }
+                                    ></FilledMeter>
+                                    <MilestoneMeterLabel>
+                                        {milestoneInfo.fundsRaised} /{" "}
+                                        {milestoneInfo.goal}
+                                    </MilestoneMeterLabel>
+                                </MilestoneMeter>
+                                Milestone: {milestoneInfo.milestoneNum}
+                            </CoverMilestoneStat>
+                        )}
                     </CoverCreatorInfoContainer>
                 </CoverImageContainer>
                 <FeedContainer>
                     <TopFeedActionsContainer>
                         <BlankSpace></BlankSpace>
-                        {
-                            isMember ? <></> : 
-                            <BecomeMemberBtn onClick={openBecomeMemberModal}>Become a Member</BecomeMemberBtn>
-                        }
-                        {
-                            votingInfo.isLive && <FollowBtn onClick={openVoteModal}>Vote</FollowBtn>
-                        }
-                        
+                        {isMember ? (
+                            <></>
+                        ) : (
+                            <BecomeMemberBtn onClick={openBecomeMemberModal}>
+                                Become a Member
+                            </BecomeMemberBtn>
+                        )}
+                        {votingInfo.isLive && (
+                            <FollowBtn onClick={openVoteModal}>Vote</FollowBtn>
+                        )}
                     </TopFeedActionsContainer>
                     <FeedSection>
                         <SectionHeader>MY STORY</SectionHeader>
-                        <StoryText>
-                            {creatorInfo.description}
-                        </StoryText>
+                        <StoryText>{creatorInfo.description}</StoryText>
                     </FeedSection>
                     <FeedSection>
                         <SectionHeader>MY WORK</SectionHeader>
                         <WorkListContainer>
-                            <a href={creatorInfo.socialUrl} target="_blank" rel="noopener noreferrer">
+                            <a
+                                href={creatorInfo.socialUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
                                 <WorkCard>
                                     <img src={spotify} alt="" />
                                     Website
@@ -889,10 +974,13 @@ const CreatorFeed = ({match}) => {
                     <FeedSection>
                         <SectionHeader>
                             <span>PROJECTS</span>
-                            {
-                                state.user.isCreator && 
-                            <SectionHeaderActionBtn onClick={openCreateProjectModal}><Add /> Create Project</SectionHeaderActionBtn>
-                            }
+                            {state.user.isCreator && (
+                                <SectionHeaderActionBtn
+                                    onClick={openCreateProjectModal}
+                                >
+                                    <Add /> Create Project
+                                </SectionHeaderActionBtn>
+                            )}
                         </SectionHeader>
                         <WorkListContainer>
                             <ProjectsCard>

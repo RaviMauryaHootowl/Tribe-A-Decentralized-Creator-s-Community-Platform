@@ -96,6 +96,7 @@ const DropdownContainer = styled.div`
     position: absolute;
     right: 0;
     top: 3.5rem;
+    z-index: 1000;
 `;
 
 
@@ -156,7 +157,7 @@ const Navbar = ({title}) => {
                         <AccountAddress>{state.user.walletAddress.substring(0, 7)}..{state.user.walletAddress.slice(-5)} <ContentCopyIcon onClick={copyWalletAddress} style={{marginLeft: '0.5rem', cursor: 'pointer'}} fontSize="10"/></AccountAddress>
                         <LogoutBtn onClick={() => {
                             logoutHandler(dispatch);
-                            navigate("/signup");
+                            navigate("/");
                         }}>LOGOUT</LogoutBtn>
                     </DropdownContainer>
                 </DropdownGroup>

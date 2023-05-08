@@ -1,4 +1,10 @@
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
 import styled from "styled-components";
 import logo from "../../images/logo.svg";
 import cover from "../../images/cover.png";
@@ -12,7 +18,12 @@ import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartm
 import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
 import SettingsSuggestRoundedIcon from "@mui/icons-material/SettingsSuggestRounded";
 import Modal from "react-modal";
-import { Add, CloseOutlined, UploadFile, UploadFileOutlined } from "@mui/icons-material";
+import {
+    Add,
+    CloseOutlined,
+    UploadFile,
+    UploadFileOutlined,
+} from "@mui/icons-material";
 import { StoreContext } from "../../utils/Store";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
@@ -458,6 +469,82 @@ const SetupMessageBtn = styled.button`
     }
 `;
 
+
+const VoteViewContainer = styled.div`
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+`;
+
+const VoteBarView = styled.div`
+    width: 100%;
+    display: grid;
+    column-gap: 1rem;
+    place-items: center;
+    grid-template-columns: auto 1fr;
+    color: white;
+`;
+
+const VoteBarLabel = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+`;
+
+const VoteBarContainer = styled.div`
+    height: 8px;
+    width: 100%;
+    background-color: white;
+    border-radius: 50vh;
+`;
+
+const VoteBarFilled = styled.div`
+    height: 8px;
+    width: ${(props) => props.percent}%;
+    background-color: #2ecc71;
+    border-radius: 50vh;
+`;
+
+const VoteBarFilledRed = styled.div`
+    height: 8px;
+    width: ${(props) => props.percent}%;
+    background-color: #e74c3c;
+    border-radius: 50vh;
+`;
+
+const VotingModalActions = styled.div`
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+`;
+
+
+const TextViewGroup = styled.div`
+    background-color: #161616;
+    color: white;
+    border-radius: 6px;
+    border: none;
+    outline: none;
+    padding: 0.8rem 1rem;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    flex-direction: column;
+    display: flex;
+
+    span {
+        font-size: 0.9rem;
+        font-weight: bold;
+        margin-bottom: 0.6rem;
+        color: #c1c1c1;
+    }
+`;
+
+const TextViewContent = styled.div`
+    font: 1.1rem;
+`;
+
 const baseStyle = {
     flex: 1,
     display: "flex",
@@ -498,7 +585,11 @@ const Dashboard = () => {
     const [cdMilestone, setCdMilestone] = useState("");
     const [votingName, setVotingName] = useState("");
     const [votingDesc, setVotingDesc] = useState("");
-    const [creatorDetailsSaveLoading, setCreatorDetailsSaveLoading] = useState(false);
+    const [votingInfo, setVotingInfo] = useState({});
+    const [creatorDetailsSaveLoading, setCreatorDetailsSaveLoading] =
+        useState(false);
+    const [requestFundsLoading, setRequestFundsLoading] = useState(false);
+    const [closeVotesLoading, setCloseVotesLoading] = useState(false);
 
     useEffect(() => {
         console.log(state.user);
@@ -509,6 +600,16 @@ const Dashboard = () => {
 
     const [isCreatorSetupModalOpen, setIsCreatorSetupModalOpen] =
         useState(false);
+
+    const [isVoteModalOpen, setIsVoteModalOpen] = useState(false);
+
+    const closeVoteModal = () => {
+        setIsVoteModalOpen(false);
+    };
+
+    const openVoteModal = () => {
+        setIsVoteModalOpen(true);
+    };
 
     const closeCreateProjectModal = () => {
         setIsCreateProjectModalOpen(false);
@@ -552,6 +653,67 @@ const Dashboard = () => {
         [isFocused, isDragAccept, isDragReject]
     );
 
+    const getVoteDetails = async () => {
+        try {
+            const magic = new Magic(
+                process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
+                {
+                    network: {
+                        rpcUrl: process.env.REACT_APP_RPC_URL,
+                        chainId: 80001,
+                    },
+                    extensions: [new OAuthExtension()],
+                }
+            );
+
+            console.log(magic);
+
+            const rpcProvider = new ethers.providers.Web3Provider(
+                magic.rpcProvider
+            );
+            const signer = rpcProvider.getSigner();
+            const contractInstance = new ethers.Contract(
+                ContractAddress,
+                ContractABI,
+                signer
+            );
+            console.log(contractInstance);
+
+            let resFromSC;
+            resFromSC = await contractInstance.getVotingStatus(
+                state.user.walletAddress
+            );
+            console.log(resFromSC);
+
+            const res = await axios.get(
+                `${process.env.REACT_APP_API}/user/getCreatorInfo?walletAddress=${state.user.walletAddress}`
+            );
+            console.log(res.data);
+            const upVoteCount = parseInt(resFromSC[2].toString());
+            const downVoteCount = parseInt(resFromSC[3].toString());
+            setVotingInfo({
+                name: res.data.votingName,
+                desc: res.data.votingDesc,
+                isLive: resFromSC[0],
+                hasVoted: resFromSC[5],
+                noOfVotes: parseInt(resFromSC[1].toString()),
+                upvoteCount: upVoteCount,
+                downvoteCount: downVoteCount,
+                percentUp:
+                    upVoteCount + downVoteCount != 0
+                        ? (upVoteCount * 100) / (upVoteCount + downVoteCount)
+                        : 0,
+                percentDown:
+                    upVoteCount + downVoteCount != 0
+                        ? (downVoteCount * 100) / (upVoteCount + downVoteCount)
+                        : 0,
+                amount: parseInt(resFromSC[4].toString()),
+            });
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
     const getVotingStatus = async () => {
         const magic = new Magic(
             process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
@@ -586,7 +748,62 @@ const Dashboard = () => {
     };
 
     const initiateVotingForRequest = async () => {
+        try {
+            setRequestFundsLoading(false);
+            const magic = new Magic(
+                process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
+                {
+                    network: {
+                        rpcUrl: process.env.REACT_APP_RPC_URL,
+                        chainId: 80001,
+                    },
+                    extensions: [new OAuthExtension()],
+                }
+            );
+
+            console.log(magic);
+
+            const rpcProvider = new ethers.providers.Web3Provider(
+                magic.rpcProvider
+            );
+            const signer = rpcProvider.getSigner();
+            const contractInstance = new ethers.Contract(
+                ContractAddress,
+                ContractABI,
+                signer
+            );
+            console.log(contractInstance);
+
+            let resFromSC;
+            resFromSC = await contractInstance.InitiateVoting(
+                ethers.utils.parseEther(`${requestAmount}`)
+            );
+
+            console.log(resFromSC);
+
+            const res = await axios.post(
+                `${process.env.REACT_APP_API}/user/updateVotingInfo`,
+                {
+                    emailId: state.user.emailId,
+                    votingName,
+                    votingDesc,
+                }
+            );
+            console.log(res.data);
+            setRequestFundsLoading(false);
+            closeCreateProjectModal();
+            toast.success("Funds requested! Users can vote now.");
+        } catch (e) {
+            console.log(e);
+            setRequestFundsLoading(false);
+            toast.error("Error in requesting funds");
+            // alert("Error in requesting funds, mostly due to reqesting more than collected amount!");
+        }
+    };
+
+    const handleCloseVotes = async () => {
         try{
+            setCloseVotesLoading(true);
             const magic = new Magic(
                 process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
                 {
@@ -612,71 +829,21 @@ const Dashboard = () => {
             console.log(contractInstance);
     
             let resFromSC;
-            resFromSC = await contractInstance.InitiateVoting(
-                ethers.utils.parseEther(`${requestAmount}`)
-            );
+            resFromSC = await contractInstance.endVoting();
+            resFromSC = await resFromSC.wait();
+    
+            resFromSC = await contractInstance.claimAmountForCreator();
+            resFromSC = await resFromSC.wait();
     
             console.log(resFromSC);
-
-            const res = await axios.post(
-                `${process.env.REACT_APP_API}/user/updateVotingInfo`,
-                {
-                    emailId: state.user.emailId,
-                    votingName,
-                    votingDesc
-                }
-            );
-            console.log(res.data);
-            closeCreateProjectModal();
-
-        } catch(e){
+            setCloseVotesLoading(false);
+            toast.success("Voting closed and amount transferred to your wallet");
+        }catch(e) {
             console.log(e);
-            alert("Error in requesting funds, mostly due to reqesting more than collected amount!");
+            setCloseVotesLoading(false);
+            toast.error("We ran into an error");
         }
-        
     };
-
-    const handleCloseVotes = async () => {
-        const magic = new Magic(
-            process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
-            {
-                network: {
-                    rpcUrl: process.env.REACT_APP_RPC_URL,
-                    chainId: 80001,
-                },
-                extensions: [new OAuthExtension()],
-            }
-        );
-
-        console.log(magic);
-
-        const rpcProvider = new ethers.providers.Web3Provider(
-            magic.rpcProvider
-        );
-        const signer = rpcProvider.getSigner();
-        const contractInstance = new ethers.Contract(
-            ContractAddress,
-            ContractABI,
-            signer
-        );
-        console.log(contractInstance);
-
-        let resFromSC;
-        resFromSC = await contractInstance.endVoting();
-        resFromSC = await resFromSC.wait();
-
-        resFromSC = await contractInstance.claimAmountForCreator();
-        resFromSC = await resFromSC.wait();
-
-        console.log(resFromSC);
-    };
-
-    const toBase64 = file => new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-    });
 
     const saveCreatorDetails = async () => {
         if (
@@ -687,12 +854,14 @@ const Dashboard = () => {
             isValid(cdMilestone)
         ) {
             try {
-
                 //first upload file
                 // const base64Image = await toBase64(cdProfilePicFile);
                 const data = new FormData();
                 data.append("image", cdProfilePicFile);
-                const imageUploadRes = await axios.post(`${process.env.REACT_APP_API}/uploadImage`, data);
+                const imageUploadRes = await axios.post(
+                    `${process.env.REACT_APP_API}/uploadImage`,
+                    data
+                );
                 console.log(imageUploadRes);
 
                 setCreatorDetailsSaveLoading(true);
@@ -743,11 +912,11 @@ const Dashboard = () => {
                 );
                 console.log(res.data);
                 setCreatorDetailsSaveLoading(false);
-                toast.success('Creator details saved! 🥳');
+                toast.success("Creator details saved! 🥳");
                 closeCreatorSetupModal();
             } catch (e) {
                 setCreatorDetailsSaveLoading(false);
-                toast.error('Failed to save details!');
+                toast.error("Failed to save details!");
                 console.log(e);
             }
         } else {
@@ -757,6 +926,39 @@ const Dashboard = () => {
 
     return (
         <OuterFrameContainer>
+            <Modal
+                isOpen={isVoteModalOpen}
+                onRequestClose={closeVoteModal}
+                style={createProjectModalStyles}
+            >
+                <CreateProjModalContainer>
+                    <ModalHeader>Cast Vote</ModalHeader>
+                    <VoteViewContainer>
+                        <TextViewGroup>
+                            <span>Request Name</span>
+                            <TextViewContent>{votingInfo.name}</TextViewContent>
+                        </TextViewGroup>
+                        <TextViewGroup>
+                            <span>Request Description</span>
+                            <TextViewContent>{votingInfo.desc}</TextViewContent>
+                        </TextViewGroup>
+                        <VoteBarView>
+                            <VoteBarLabel>Yes</VoteBarLabel>
+                            <VoteBarContainer>
+                                <VoteBarFilled
+                                    percent={votingInfo.percentUp}
+                                ></VoteBarFilled>
+                            </VoteBarContainer>
+                            <VoteBarLabel>No</VoteBarLabel>
+                            <VoteBarContainer>
+                                <VoteBarFilledRed
+                                    percent={votingInfo.percentDown}
+                                ></VoteBarFilledRed>
+                            </VoteBarContainer>
+                        </VoteBarView>
+                    </VoteViewContainer>
+                </CreateProjModalContainer>
+            </Modal>
             <Modal
                 isOpen={isCreatorSetupModalOpen}
                 onRequestClose={closeCreatorSetupModal}
@@ -789,17 +991,20 @@ const Dashboard = () => {
                     <TextInputGroup>
                         <span>Profile Picture URL</span>
                         <div {...getRootProps({ style })}>
-                                <input {...getInputProps()} />
-                                <UploadFileOutlined />
-                                <p>
-                                    {cdProfilePicFile != null
-                                        ? `${cdProfilePicFile.path.substring(
-                                              0,
-                                              Math.min(cdProfilePicFile.path.length, 10)
-                                          )}...`
-                                        : "Upload image"}
-                                </p>
-                            </div>
+                            <input {...getInputProps()} />
+                            <UploadFileOutlined />
+                            <p>
+                                {cdProfilePicFile != null
+                                    ? `${cdProfilePicFile.path.substring(
+                                          0,
+                                          Math.min(
+                                              cdProfilePicFile.path.length,
+                                              10
+                                          )
+                                      )}...`
+                                    : "Upload image"}
+                            </p>
+                        </div>
                         {/* <CustomInput
                             type="file"
                             onChange={(e) => {
@@ -830,10 +1035,15 @@ const Dashboard = () => {
                         />
                     </TextInputGroup>
                     <CreateProjModalBottom>
-                        <BecomeMemberBtn disabled={creatorDetailsSaveLoading} onClick={saveCreatorDetails}>
-                            {
-                                !creatorDetailsSaveLoading ? "Save" : <WhiteLoader label={"Saving..."}/>
-                            }
+                        <BecomeMemberBtn
+                            disabled={creatorDetailsSaveLoading}
+                            onClick={saveCreatorDetails}
+                        >
+                            {!creatorDetailsSaveLoading ? (
+                                "Save"
+                            ) : (
+                                <WhiteLoader label={"Saving..."} />
+                            )}
                         </BecomeMemberBtn>
                     </CreateProjModalBottom>
                 </CreateProjModalContainer>
@@ -850,7 +1060,9 @@ const Dashboard = () => {
                         <CustomInput
                             type="text"
                             value={votingName}
-                            onChange={(e) => {setVotingName(e.target.value)}}
+                            onChange={(e) => {
+                                setVotingName(e.target.value);
+                            }}
                             placeholder="What are you creating?"
                         />
                     </TextInputGroup>
@@ -859,7 +1071,9 @@ const Dashboard = () => {
                         <CustomInput
                             type="text"
                             value={votingDesc}
-                            onChange={(e) => {setVotingDesc(e.target.value)}}
+                            onChange={(e) => {
+                                setVotingDesc(e.target.value);
+                            }}
                             placeholder="Describe why you need the funds"
                         />
                     </TextInputGroup>
@@ -878,7 +1092,11 @@ const Dashboard = () => {
                             </TextInputGroup>
                         </FullFlexDiv>
                         <BecomeMemberBtn onClick={initiateVotingForRequest}>
-                            Request
+                            {requestFundsLoading ? (
+                                <WhiteLoader label={"Requesting..."} />
+                            ) : (
+                                "Request"
+                            )}
                         </BecomeMemberBtn>
                     </CreateProjModalBottom>
                 </CreateProjModalContainer>
@@ -899,14 +1117,19 @@ const Dashboard = () => {
                     </SetupMessageBox>
                 </SetupMessageContainer>
                 <FeedContainer>
-                    <BecomeMemberBtn onClick={getVotingStatus}>
+                    <BecomeMemberBtn onClick={() => {
+                        getVoteDetails();
+                        setIsVoteModalOpen(true);
+                    }}>
                         View Votes
                     </BecomeMemberBtn>
                     <BecomeMemberBtn onClick={openCreateProjectModal}>
                         Request Funds
                     </BecomeMemberBtn>
                     <BecomeMemberBtn onClick={handleCloseVotes}>
-                        Close Votes & Transfer
+                        {
+                            closeVotesLoading ? <WhiteLoader label={"Sending..."} /> : "Close Votes & Transfer"
+                        }
                     </BecomeMemberBtn>
                 </FeedContainer>
             </CreatorPageContainer>
