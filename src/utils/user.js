@@ -257,50 +257,6 @@ export const magicLogin = async (state, dispatch, did, userInfo, isCreator) => {
             }
         );
         console.log(userBackend);
-        let resFromSC;
-        if (userBackend.data.isUserNew) {
-            // also register on smart contract
-            console.log("Registering on SC");
-            const magic = new Magic(
-                process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
-                {
-                    network: {
-                        rpcUrl: process.env.REACT_APP_RPC_URL,
-                        chainId: 80001,
-                    },
-                    extensions: [new OAuthExtension()],
-                }
-            );
-
-            console.log(magic);
-
-            const rpcProvider = new ethers.providers.Web3Provider(
-                magic.rpcProvider
-            );
-            const signer = rpcProvider.getSigner();
-            const userAddress = userBackend.data.walletAddress;
-            const contractInstance = new ethers.Contract(
-                ContractAddress,
-                ContractABI,
-                signer
-            );
-
-            // Biconomy starts here
-
-            if (isCreator) {
-                resFromSC = await contractInstance.RegisterCreator(
-                    "Creator name",
-                    "youtube",
-                    1000
-                );
-                // const resFromSC = await registerCreator(magic, userAddress);
-                console.log(resFromSC);
-            } else {
-                resFromSC = await contractInstance.RegisterContributor("Contributor name");
-                // const resFromSC = await registerContributor(magic, userAddress);
-                console.log(resFromSC);
-            }
-        }
 
         const inThirtyMins = new Date(new Date().getTime() + 30 * 60 * 1000);
 
@@ -317,9 +273,9 @@ export const magicLogin = async (state, dispatch, did, userInfo, isCreator) => {
             time: inThirtyMins,
         });
         Cookies.set("jwt", userBackend.data.token);
-        return true;
+        return userBackend.data;
     } catch (error) {
-        return false;
+        return {};
     }
 };
 
