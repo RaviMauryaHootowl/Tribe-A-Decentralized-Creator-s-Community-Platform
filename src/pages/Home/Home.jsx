@@ -17,6 +17,8 @@ import { StoreContext } from "../../utils/Store";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Sidebar from "../../components/Sidebar";
+import axios from "axios";
+import moment from "moment/moment";
 
 const createProjectModalStyles = {
     content: {
@@ -177,6 +179,74 @@ const FeedContainer = styled.div`
     flex-direction: column;
     width: 100%;
     padding: 1rem 2rem;
+    color: #8f8f8f;
+`;
+
+const EmptyFeedContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem 2rem;
+    color: #8f8f8f;
+`;
+
+const PostCard = styled.div`
+    display: flex;
+    flex-direction: column;
+    max-width: 500px;
+    background-color: #3B3B3B;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    color: white;
+    border-left: ${(props) => props.isMemberOnly ? "5px" : "0px"} solid #F423BA;
+`;
+
+const PostCredits = styled.div`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    padding: 1rem;
+`;
+
+const PostCreatorPic = styled.div`
+    width: 2.5rem;
+    height: 2.5rem;
+    background-image: url("${(props) => props.src}");
+    background-position: center;
+    background-size: cover;
+    border-radius: 50%;
+    margin-right: 1rem;
+`;
+
+const PostCreatorNameWithDate = styled.div`
+    display: flex;
+    flex-direction: column;
+`;
+
+const PostCreatorName = styled.div`
+    font-size: 1.1rem;
+`;
+const PostDate = styled.div`
+    color: #878787;
+`;
+
+const PostImage = styled.img`
+    width: 100%;
+`;
+
+const PostContent = styled.div`
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 1rem;
+`;
+
+const PostCaption = styled.div`
+    
 `;
 
 const TopFeedActionsContainer = styled.div`
@@ -241,7 +311,7 @@ const HomeNavbar = styled.div`
     width: 100%;
     display: flex;
     justify-content: space-between;
-    align-items:center;
+    align-items: center;
     margin-top: 3rem;
     padding: 0 2rem;
 `;
@@ -408,9 +478,13 @@ const FullFlexDiv = styled.div`
 const Home = () => {
     const { state, dispatch } = useContext(StoreContext);
     const navigate = useNavigate();
+    const [postList, setPostList] = useState([]);
 
     useEffect(() => {
         console.log(state.user);
+        if (state.user.emailId) {
+            fetchPosts(state.user.emailId);
+        }
     }, [state.user]);
 
     const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] =
@@ -418,11 +492,23 @@ const Home = () => {
 
     const closeCreateProjectModal = () => {
         setIsCreateProjectModalOpen(false);
-    }
+    };
 
     const openCreateProjectModal = () => {
         setIsCreateProjectModalOpen(true);
-    }
+    };
+
+    const fetchPosts = async (emailId) => {
+        try {
+            const postRes = await axios.get(
+                `${process.env.REACT_APP_API}/post/getByUserWallet?emailId=${emailId}`
+            );
+            console.log(postRes.data);
+            setPostList(postRes.data);
+        } catch (e) {
+            console.log(e);
+        }
+    };
 
     return (
         <OuterFrameContainer>
@@ -453,12 +539,7 @@ const Home = () => {
                     </TextInputGroup>
                     <TextInputGroup>
                         <span>Project Cover Image</span>
-                        <CustomInput
-                            type="text"
-                            name=""
-                            id=""
-                            placeholder=""
-                        />
+                        <CustomInput type="text" name="" id="" placeholder="" />
                     </TextInputGroup>
                     <CreateProjModalBottom>
                         <FullFlexDiv>
@@ -479,12 +560,26 @@ const Home = () => {
             <Sidebar />
             <CreatorPageContainer>
                 <Navbar title={"HOME"} />
+                {
+                    postList.length == 0 && <EmptyFeedContainer>No Posts</EmptyFeedContainer>
+                }
                 <FeedContainer>
-                    
-                    <FeedSection>
-                        <SectionHeader>HOME</SectionHeader>
-                    </FeedSection>
-                    
+                    {postList.map((post, index) => {
+                        return (
+                            <PostCard id={index} isMemberOnly={post.isMemberOnly}>
+                                <PostCredits><PostCreatorPic src={post.profilePic} /> 
+                                    <PostCreatorNameWithDate>
+                                        <PostCreatorName>{post.fullName}</PostCreatorName>
+                                        <PostDate>{moment(post.createdAt).format("DD/MM/YYYY, h:mm A")}</PostDate>
+                                    </PostCreatorNameWithDate>
+                                </PostCredits>
+                                <PostImage src={post.picUrl} />
+                                <PostContent>
+                                    <PostCaption>{post.caption}</PostCaption>
+                                </PostContent>
+                            </PostCard>
+                        );
+                    })}
                 </FeedContainer>
             </CreatorPageContainer>
         </OuterFrameContainer>

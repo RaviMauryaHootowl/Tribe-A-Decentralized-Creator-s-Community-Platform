@@ -18,6 +18,7 @@ import Sidebar from "../../components/Sidebar";
 import Navbar from "../../components/Navbar";
 import { toast } from "react-toastify";
 import WhiteLoader from "../../components/WhiteLoader";
+import moment from "moment";
 
 const createProjectModalStyles = {
     content: {
@@ -476,6 +477,64 @@ const FullFlexDiv = styled.div`
     flex: 1;
 `;
 
+
+const PostCard = styled.div`
+    display: flex;
+    flex-direction: column;
+    max-width: 500px;
+    background-color: #3B3B3B;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    color: white;
+    border-left: ${(props) => props.isMemberOnly ? "5px" : "0px"} solid #F423BA;
+`;
+
+const PostCredits = styled.div`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    padding: 1rem;
+`;
+
+const PostCreatorPic = styled.div`
+    width: 2.5rem;
+    height: 2.5rem;
+    background-image: url("${(props) => props.src}");
+    background-position: center;
+    background-size: cover;
+    border-radius: 50%;
+    margin-right: 1rem;
+`;
+
+const PostCreatorNameWithDate = styled.div`
+    display: flex;
+    flex-direction: column;
+`;
+
+const PostCreatorName = styled.div`
+    font-size: 1.1rem;
+`;
+const PostDate = styled.div`
+    color: #878787;
+`;
+
+const PostImage = styled.img`
+    width: 100%;
+`;
+
+const PostContent = styled.div`
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 1rem;
+`;
+
+const PostCaption = styled.div`
+    
+`;
+
+
 const CreatorFeed = ({ match }) => {
     const params = useParams();
     const { state, dispatch } = useContext(StoreContext);
@@ -491,10 +550,17 @@ const CreatorFeed = ({ match }) => {
     const [votingInfo, setVotingInfo] = useState({});
     const [isBecomeMemberLoading, setIsBecomeMemberLoading] = useState(false);
     const [isVotingLoading, setIsVotingLoading] = useState(false);
+    const [postList, setPostList] = useState([]);
 
     useEffect(() => {
         console.log(state.user);
     }, [state.user]);
+
+    useEffect(() => {
+        if (state.user.emailId && creatorInfo.emailId) {
+            fetchPosts(state.user.emailId, creatorInfo.emailId);
+        }
+    }, [state.user, creatorInfo]);
 
     useEffect(() => {
         console.log(params.id);
@@ -734,6 +800,19 @@ const CreatorFeed = ({ match }) => {
             console.log(e);
             toast.error("We ran into an error, try again later!");
             setIsVotingLoading(false);
+        }
+    };
+
+    const fetchPosts = async (emailId, creatorEmailId) => {
+        try {
+            const postRes = await axios.get(
+                `${process.env.REACT_APP_API}/post/getPostsOfCreator`,
+                { params: { emailId, creatorEmailId } }
+            );
+            console.log(postRes.data);
+            setPostList(postRes.data);
+        } catch (e) {
+            console.log(e);
         }
     };
 
@@ -992,6 +1071,39 @@ const CreatorFeed = ({ match }) => {
                                 <span>8th Single: A song</span>
                             </ProjectsCard>
                         </WorkListContainer>
+                    </FeedSection>
+                    <FeedSection>
+                        <SectionHeader>
+                            <span>POSTS</span>
+                        </SectionHeader>
+                        {postList.map((post, index) => {
+                            return (
+                                <PostCard
+                                    id={index}
+                                    isMemberOnly={post.isMemberOnly}
+                                >
+                                    <PostCredits>
+                                        <PostCreatorPic src={post.profilePic} />
+                                        <PostCreatorNameWithDate>
+                                            <PostCreatorName>
+                                                {post.fullName}
+                                            </PostCreatorName>
+                                            <PostDate>
+                                                {moment(post.createdAt).format(
+                                                    "DD/MM/YYYY, h:mm A"
+                                                )}
+                                            </PostDate>
+                                        </PostCreatorNameWithDate>
+                                    </PostCredits>
+                                    <PostImage src={post.picUrl} />
+                                    <PostContent>
+                                        <PostCaption>
+                                            {post.caption}
+                                        </PostCaption>
+                                    </PostContent>
+                                </PostCard>
+                            );
+                        })}
                     </FeedSection>
                 </FeedContainer>
             </CreatorPageContainer>

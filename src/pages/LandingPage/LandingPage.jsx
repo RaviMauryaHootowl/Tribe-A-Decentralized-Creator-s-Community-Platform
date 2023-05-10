@@ -140,39 +140,40 @@ const SignUpButton = styled.button`
 const ActionsContainer = styled.div`
     display: flex;
     align-items: center;
+    margin-top: 1rem;
 `;
 
 const ActionButtonCreator = styled.button`
     padding: 1rem 2rem;
     margin: 0.5rem;
-    background-color: transparent;
+    background-color: #ffffff36;
+    border-radius: 8px;
     outline: none;
     border: none;
     color: white;
     font-size: 1.3rem;
     cursor: pointer;
+    transition: all 0.5s ease;
     &:hover{
-        text-decoration: underline;
-        color: #F423BA;
-        text-decoration-color: #F423BA;
-        text-decoration-thickness: 4px;
+        background-color: #F423BA;
+        color: white;
     }
 `;
 
 const ActionButtonUser = styled.button`
     padding: 1rem 2rem;
     margin: 0.5rem;
-    background-color: transparent;
+    background-color: #ffffff36;
+    border-radius: 8px;
     outline: none;
     border: none;
     color: white;
     font-size: 1.3rem;
     cursor: pointer;
+    transition: all 0.5s ease;
     &:hover{
-        text-decoration: underline;
-        color: #1E5ED9;
-        text-decoration-color: #1E5ED9;
-        text-decoration-thickness: 4px;
+        background-color: #1E5ED9;
+        color: white;
     }
 `;
 

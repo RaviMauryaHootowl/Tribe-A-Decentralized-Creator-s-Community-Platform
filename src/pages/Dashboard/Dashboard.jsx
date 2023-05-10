@@ -35,9 +35,11 @@ import Sidebar from "../../components/Sidebar";
 import { isValid } from "../../utils/utils";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { CircularProgress } from "@mui/material";
+import { CircularProgress, Switch } from "@mui/material";
 import WhiteLoader from "../../components/WhiteLoader";
 import { useDropzone } from "react-dropzone";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
 const createProjectModalStyles = {
     content: {
@@ -232,7 +234,7 @@ const BecomeMemberBtn = styled.button`
     }
     &:active {
         transition: all 0.1s ease;
-        transform: translateY(4px) rotateZ(2deg);
+        transform: translateY(4px);
     }
 `;
 
@@ -417,6 +419,11 @@ const CustomInput = styled.input`
     font-size: 1.1rem;
 `;
 
+const PostTypeSwitchContainer = styled.div`
+    display: flex;
+    align-items: center;
+`;
+
 const CreateProjModalBottom = styled.div`
     width: 100%;
     display: flex;
@@ -469,7 +476,6 @@ const SetupMessageBtn = styled.button`
     }
 `;
 
-
 const VoteViewContainer = styled.div`
     width: 100%;
     display: flex;
@@ -519,7 +525,6 @@ const VotingModalActions = styled.div`
     justify-content: center;
     margin-top: 1rem;
 `;
-
 
 const TextViewGroup = styled.div`
     background-color: #161616;
@@ -583,6 +588,8 @@ const Dashboard = () => {
     const [cdProfilePicFile, setCdProfilePicFile] = useState(null);
     const [cdSocialURL, setCdSocialURL] = useState("");
     const [cdMilestone, setCdMilestone] = useState("");
+    const [cpPic, setCpPic] = useState(null);
+    const [cpCaption, setCpCaption] = useState(null);
     const [votingName, setVotingName] = useState("");
     const [votingDesc, setVotingDesc] = useState("");
     const [votingInfo, setVotingInfo] = useState({});
@@ -590,6 +597,8 @@ const Dashboard = () => {
         useState(false);
     const [requestFundsLoading, setRequestFundsLoading] = useState(false);
     const [closeVotesLoading, setCloseVotesLoading] = useState(false);
+    const [postSaveLoading, setPostSaveLoading] = useState(false);
+    const [postType, setPostType] = useState(false);
 
     useEffect(() => {
         console.log(state.user);
@@ -602,6 +611,7 @@ const Dashboard = () => {
         useState(false);
 
     const [isVoteModalOpen, setIsVoteModalOpen] = useState(false);
+    const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
 
     const closeVoteModal = () => {
         setIsVoteModalOpen(false);
@@ -627,11 +637,20 @@ const Dashboard = () => {
         setIsCreatorSetupModalOpen(true);
     };
 
+    const closeCreatePostModal = () => {
+        setIsCreatePostModalOpen(false);
+    };
+
+    const openCreatePostModal = () => {
+        setIsCreatePostModalOpen(true);
+    };
+
     const onDrop = useCallback(
         (acceptedFiles) => {
             setCdProfilePicFile(acceptedFiles[0]);
+            setCpPic(acceptedFiles[0]);
         },
-        [cdProfilePicFile]
+        [cdProfilePicFile, cpPic]
     );
 
     const {
@@ -802,7 +821,7 @@ const Dashboard = () => {
     };
 
     const handleCloseVotes = async () => {
-        try{
+        try {
             setCloseVotesLoading(true);
             const magic = new Magic(
                 process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
@@ -814,9 +833,9 @@ const Dashboard = () => {
                     extensions: [new OAuthExtension()],
                 }
             );
-    
+
             console.log(magic);
-    
+
             const rpcProvider = new ethers.providers.Web3Provider(
                 magic.rpcProvider
             );
@@ -827,18 +846,20 @@ const Dashboard = () => {
                 signer
             );
             console.log(contractInstance);
-    
+
             let resFromSC;
             resFromSC = await contractInstance.endVoting();
             resFromSC = await resFromSC.wait();
-    
+
             resFromSC = await contractInstance.claimAmountForCreator();
             resFromSC = await resFromSC.wait();
-    
+
             console.log(resFromSC);
             setCloseVotesLoading(false);
-            toast.success("Voting closed and amount transferred to your wallet");
-        }catch(e) {
+            toast.success(
+                "Voting closed and amount transferred to your wallet"
+            );
+        } catch (e) {
             console.log(e);
             setCloseVotesLoading(false);
             toast.error("We ran into an error");
@@ -854,8 +875,7 @@ const Dashboard = () => {
             isValid(cdMilestone)
         ) {
             try {
-                //first upload file
-                // const base64Image = await toBase64(cdProfilePicFile);
+                setCreatorDetailsSaveLoading(true);
                 const data = new FormData();
                 data.append("image", cdProfilePicFile);
                 const imageUploadRes = await axios.post(
@@ -864,7 +884,7 @@ const Dashboard = () => {
                 );
                 console.log(imageUploadRes);
 
-                setCreatorDetailsSaveLoading(true);
+                
                 const milestoneInWei = ethers.utils.parseEther(
                     `${cdMilestone}`
                 );
@@ -924,6 +944,36 @@ const Dashboard = () => {
         }
     };
 
+    const savePost = async () => {
+        if (isValid(cpCaption) && cpPic != null) {
+            try {
+                setPostSaveLoading(true);
+                const data = new FormData();
+                data.append("image", cpPic);
+                data.append("walletAddress", state.user.walletAddress);
+                data.append("emailId", state.user.emailId);
+                data.append("caption", cpCaption);
+                data.append("isMemberOnly", postType);
+
+                const postRes = await axios.post(
+                    `${process.env.REACT_APP_API}/post/create`,
+                    data
+                );
+                console.log(postRes);
+
+                setPostSaveLoading(false);
+                toast.success("Post published! 🥳");
+                closeCreatePostModal();
+            } catch (e) {
+                setPostSaveLoading(false);
+                toast.error("Failed to save details!");
+                console.log(e);
+            }
+        } else {
+            alert("Fill all the details first");
+        }
+    };
+
     return (
         <OuterFrameContainer>
             <Modal
@@ -957,6 +1007,68 @@ const Dashboard = () => {
                             </VoteBarContainer>
                         </VoteBarView>
                     </VoteViewContainer>
+                </CreateProjModalContainer>
+            </Modal>
+            <Modal
+                isOpen={isCreatePostModalOpen}
+                onRequestClose={closeCreatePostModal}
+                style={createProjectModalStyles}
+            >
+                <CreateProjModalContainer>
+                    <ModalHeader>Create Post</ModalHeader>
+                    <TextInputGroup>
+                        <span>Post Image</span>
+                        <div {...getRootProps({ style })}>
+                            <input {...getInputProps()} />
+                            <UploadFileOutlined />
+                            <p>
+                                {cpPic != null
+                                    ? `${cpPic.path.substring(
+                                          0,
+                                          Math.min(cpPic.path.length, 10)
+                                      )}...`
+                                    : "Upload image"}
+                            </p>
+                        </div>
+                    </TextInputGroup>
+                    <TextInputGroup>
+                        <span>Caption</span>
+                        <CustomInput
+                            value={cpCaption}
+                            onChange={(e) => {
+                                setCpCaption(e.target.value);
+                            }}
+                            type="text"
+                            placeholder="Post Description"
+                        />
+                    </TextInputGroup>
+                    <TextInputGroup>
+                        <span>Post Type</span>
+                        <PostTypeSwitchContainer>
+                            Everyone
+                            <Switch
+                                checked={postType}
+                                onChange={(e) => {
+                                    setPostType(e.target.checked);
+                                }}
+                                inputProps={{ "aria-label": "controlled" }}
+                            />
+                            Members Only
+                        </PostTypeSwitchContainer>
+                    </TextInputGroup>
+
+                    <CreateProjModalBottom>
+                        <BecomeMemberBtn
+                            disabled={postSaveLoading}
+                            onClick={savePost}
+                        >
+                            {!postSaveLoading ? (
+                                "Publish"
+                            ) : (
+                                <WhiteLoader label={"Sending..."} />
+                            )}
+                        </BecomeMemberBtn>
+                    </CreateProjModalBottom>
                 </CreateProjModalContainer>
             </Modal>
             <Modal
@@ -1117,19 +1229,26 @@ const Dashboard = () => {
                     </SetupMessageBox>
                 </SetupMessageContainer>
                 <FeedContainer>
-                    <BecomeMemberBtn onClick={() => {
-                        getVoteDetails();
-                        setIsVoteModalOpen(true);
-                    }}>
+                    <BecomeMemberBtn onClick={openCreatePostModal}>
+                        Create Post
+                    </BecomeMemberBtn>
+                    <BecomeMemberBtn
+                        onClick={() => {
+                            getVoteDetails();
+                            setIsVoteModalOpen(true);
+                        }}
+                    >
                         View Votes
                     </BecomeMemberBtn>
                     <BecomeMemberBtn onClick={openCreateProjectModal}>
                         Request Funds
                     </BecomeMemberBtn>
                     <BecomeMemberBtn onClick={handleCloseVotes}>
-                        {
-                            closeVotesLoading ? <WhiteLoader label={"Sending..."} /> : "Close Votes & Transfer"
-                        }
+                        {closeVotesLoading ? (
+                            <WhiteLoader label={"Sending..."} />
+                        ) : (
+                            "Close Votes & Transfer"
+                        )}
                     </BecomeMemberBtn>
                 </FeedContainer>
             </CreatorPageContainer>
