@@ -8,7 +8,7 @@ import music from "../../images/musicImage.png";
 import Modal from "react-modal";
 import { Add, CloseOutlined, UploadFile } from "@mui/icons-material";
 import { StoreContext } from "../../utils/Store";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { Magic } from "magic-sdk";
 import { OAuthExtension } from "@magic-ext/oauth";
@@ -477,16 +477,16 @@ const FullFlexDiv = styled.div`
     flex: 1;
 `;
 
-
 const PostCard = styled.div`
     display: flex;
     flex-direction: column;
     max-width: 500px;
-    background-color: #3B3B3B;
+    background-color: #3b3b3b;
     margin-bottom: 2rem;
     border-radius: 8px;
     color: white;
-    border-left: ${(props) => props.isMemberOnly ? "5px" : "0px"} solid #F423BA;
+    border-left: ${(props) => (props.isMemberOnly ? "5px" : "0px")} solid
+        #f423ba;
 `;
 
 const PostCredits = styled.div`
@@ -530,13 +530,11 @@ const PostContent = styled.div`
     padding: 1rem;
 `;
 
-const PostCaption = styled.div`
-    
-`;
-
+const PostCaption = styled.div``;
 
 const CreatorFeed = ({ match }) => {
     const params = useParams();
+    const navigate = useNavigate();
     const { state, dispatch } = useContext(StoreContext);
     const [creatorInfo, setCreatorInfo] = useState({});
     const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] =
@@ -816,6 +814,10 @@ const CreatorFeed = ({ match }) => {
         }
     };
 
+    const navigateToChats = () => {
+        navigate(`/chats/${creatorInfo.walletAddress}`);
+    }
+
     const closeCreateProjectModal = () => {
         setIsCreateProjectModalOpen(false);
     };
@@ -1021,14 +1023,20 @@ const CreatorFeed = ({ match }) => {
                     <TopFeedActionsContainer>
                         <BlankSpace></BlankSpace>
                         {isMember ? (
-                            <></>
+                            <>
+                                <FollowBtn onClick={navigateToChats}>
+                                    Chat
+                                </FollowBtn>
+                                {votingInfo.isLive && (
+                                    <FollowBtn onClick={openVoteModal}>
+                                        Vote
+                                    </FollowBtn>
+                                )}
+                            </>
                         ) : (
                             <BecomeMemberBtn onClick={openBecomeMemberModal}>
                                 Become a Member
                             </BecomeMemberBtn>
-                        )}
-                        {votingInfo.isLive && (
-                            <FollowBtn onClick={openVoteModal}>Vote</FollowBtn>
                         )}
                     </TopFeedActionsContainer>
                     <FeedSection>

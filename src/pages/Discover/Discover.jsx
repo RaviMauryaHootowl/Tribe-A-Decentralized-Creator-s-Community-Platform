@@ -157,6 +157,7 @@ const CreatorProfilePic = styled.img`
     width: 5rem;
     height: 5rem;
     border-radius: 50vh;
+    object-fit: cover;
 `;
 
 const CreatorName = styled.span`

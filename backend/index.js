@@ -20,6 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 // import routes
 const userRouter = require("./routes/user");
 const postRouter = require("./routes/post");
+const chatRouter = require("./routes/chat");
 const mongoose = require("mongoose");
 const { uploadImageController } = require("./controllers/user.js");
 
@@ -37,6 +38,7 @@ const allowCORS = (req, res, next) => {
 
 app.use("/user", userRouter);
 app.use("/post", postRouter);
+app.use("/chat", chatRouter);
 
 app.post("/uploadImage", upload.single('image'), uploadImageController);
 

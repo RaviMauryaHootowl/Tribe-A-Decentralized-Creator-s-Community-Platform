@@ -23,12 +23,13 @@ import {
     CloseOutlined,
     PaidRounded,
     PollRounded,
+    SendRounded,
     TaskAltRounded,
     UploadFile,
     UploadFileOutlined,
 } from "@mui/icons-material";
 import { StoreContext } from "../../utils/Store";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import { Magic } from "magic-sdk";
 import { OAuthExtension } from "@magic-ext/oauth";
@@ -44,6 +45,7 @@ import { useDropzone } from "react-dropzone";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import MarkAsUnreadIcon from '@mui/icons-material/MarkAsUnread';
+import moment from "moment";
 
 const createProjectModalStyles = {
     content: {
@@ -585,6 +587,114 @@ const ActionButtonIcon = styled.div`
     margin-bottom: 0.5rem;
 `;
 
+const ChatsWindowOuterContainer = styled.div`
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    overflow-y: hidden;
+`;
+
+const ChatsWindow = styled.div`
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-radius: 0.5rem;
+    background-color: #2f2f2f;
+    color: white;
+    overflow-y: hidden;
+`;
+
+const ChatsWindowHeader = styled.div`
+    width: 100%;
+    padding: 1rem;
+    background-color: #393939;
+    display: flex;
+    align-items: center;
+`;
+
+const ChatWindowHeaderAvatar = styled.img`
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    margin-right: 1rem;
+`;
+
+const ChatsListContainer = styled.div`
+    width: 100%;
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+`;
+
+const ChatsListContainerScroll = styled.div`
+    width: 100%;
+`;
+
+const ChatsMessageInputContainer = styled.div`
+    display: flex;
+    flex-direction: row;
+    padding: 1rem;
+`;
+
+const ChatMessageInput = styled.input`
+    flex: 1;
+    font-size: 1.1rem;
+    background-color: #393939;
+    border: none;
+    outline: none;
+    padding: 0.6rem 1rem;
+    color: white;
+
+`;
+const ChatSendBtn = styled.button`
+    margin-left: 1rem;
+    background-color: #258e25;
+    border: none;
+    outline: none;
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.5s ease;
+    &:hover{
+        transform: rotate(-20deg);
+    }
+    &:active{
+        transform: scale(0.9);
+    }
+`;
+
+const ChatBubbleContainer = styled.div`
+    padding: 0.3rem 0rem;
+    display: flex;
+    justify-content: ${(props) => props.isMe ? "end" : "start"};
+`;
+
+const ChatBubble = styled.div`
+    max-width: 40%;
+    background-color:${(props) => props.isMe ? "#a9ffca" : "#9e9eff"} ;
+    color: black;
+    border-radius: 1rem;
+    padding: 0.5rem 1rem;
+`;
+
+const ChatAuthor = styled.div`
+    font-size: 0.9rem;
+    font-weight: bold;
+`;
+
+const ChatTime = styled.div`
+    font-size: 0.9rem;
+    color: #343434;
+    text-align: right;
+`;
+
 const baseStyle = {
     flex: 1,
     display: "flex",
@@ -613,9 +723,14 @@ const rejectStyle = {
     borderColor: "#ff1744",
 };
 
-const Dashboard = () => {
+const Chats = () => {
     const { state, dispatch } = useContext(StoreContext);
+    const params = useParams();
     const navigate = useNavigate();
+    const [creatorInfo, setCreatorInfo] = useState({});
+    const [isMember, setIsMember] = useState(false);
+    const [chatBody, setChatBody] = useState("");
+    const [chatsList, setChatsList] = useState([]);
     const [requestAmount, setRequestAmount] = useState("");
     const [cdName, setCdName] = useState("");
     const [cdDesc, setCdDesc] = useState("");
@@ -688,24 +803,34 @@ const Dashboard = () => {
         [cdProfilePicFile, cpPic]
     );
 
-    const {
-        acceptedFiles,
-        getRootProps,
-        getInputProps,
-        isFocused,
-        isDragAccept,
-        isDragReject,
-    } = useDropzone({ onDrop });
+    useEffect(() => {
+        console.log(params.id);
+        fetchCreatorInfo(params.id);
+    }, [params]);
 
-    const style = useMemo(
-        () => ({
-            ...baseStyle,
-            ...(isFocused ? focusedStyle : {}),
-            ...(isDragAccept ? acceptStyle : {}),
-            ...(isDragReject ? rejectStyle : {}),
-        }),
-        [isFocused, isDragAccept, isDragReject]
-    );
+    const fetchCreatorInfo = async (id) => {
+        try {
+            const res = await axios.get(
+                `${process.env.REACT_APP_API}/user/getCreatorInfo?walletAddress=${id}`
+            );
+            console.log(res.data);
+            const memberFind = res.data.members.find(
+                (o) => o.emailId == state.user.emailId
+            );
+            if (memberFind) {
+                setIsMember(true);
+            } else {
+                setIsMember(false);
+            }
+            setCreatorInfo(res.data);
+            fetchAllChats(res.data.walletAddress);
+            // getMilestoneDetails(res.data.walletAddress);
+            // getVoteDetails(res.data.walletAddress);
+        } catch (err) {
+            console.log(err);
+            setCreatorInfo({});
+        }
+    };
 
     const getVoteDetails = async () => {
         try {
@@ -1009,296 +1134,95 @@ const Dashboard = () => {
         }
     };
 
+    const chats = [
+        {
+        walletAddress: "0x123",
+        userName: "raviMaurya",
+        chatBody: "Heeeyyyy, this is a test message!",
+        time: "4:20 AM"   
+    },
+        {
+        walletAddress: "0x44c346CD856f70c4a3df0A7c23a4C88041CFC61b",
+        userName: "pikuuu",
+        chatBody: "Hieeeee, howwzzz is you???",
+        time: "4:23 AM"
+    },
+];
+
+const sendMessage = async () => {
+    try{
+        console.log(chatBody);
+        const chatRes = await axios.post(
+            `${process.env.REACT_APP_API}/chat/sendChat`,
+            {
+                chatBody: chatBody,
+                walletAddress: state.user.walletAddress,
+                userName: state.user.userName,
+                creatorWalletAddress: creatorInfo.walletAddress
+            }
+        );
+        setChatBody("");
+        console.log(chatRes);
+        fetchAllChats(creatorInfo.walletAddress);
+    }
+    catch (e){
+        console.log(e);
+    }
+}
+
+const fetchAllChats = async (creatorWalletAddress) => {
+    try{
+        const chatRes = await axios.get(
+            `${process.env.REACT_APP_API}/chat/getByCreatorWallet`,
+            { params: { walletAddress: creatorWalletAddress } }
+        );
+        setChatsList(chatRes.data);
+    }catch (e){
+        console.log(e);
+    }
+}
+
     return (
         <OuterFrameContainer>
-            <Modal
-                isOpen={isVoteModalOpen}
-                onRequestClose={closeVoteModal}
-                style={createProjectModalStyles}
-            >
-                <CreateProjModalContainer>
-                    <ModalHeader>Cast Vote</ModalHeader>
-                    <VoteViewContainer>
-                        <TextViewGroup>
-                            <span>Request Name</span>
-                            <TextViewContent>{votingInfo.name}</TextViewContent>
-                        </TextViewGroup>
-                        <TextViewGroup>
-                            <span>Request Description</span>
-                            <TextViewContent>{votingInfo.desc}</TextViewContent>
-                        </TextViewGroup>
-                        <VoteBarView>
-                            <VoteBarLabel>Yes</VoteBarLabel>
-                            <VoteBarContainer>
-                                <VoteBarFilled
-                                    percent={votingInfo.percentUp}
-                                ></VoteBarFilled>
-                            </VoteBarContainer>
-                            <VoteBarLabel>No</VoteBarLabel>
-                            <VoteBarContainer>
-                                <VoteBarFilledRed
-                                    percent={votingInfo.percentDown}
-                                ></VoteBarFilledRed>
-                            </VoteBarContainer>
-                        </VoteBarView>
-                    </VoteViewContainer>
-                </CreateProjModalContainer>
-            </Modal>
-            <Modal
-                isOpen={isCreatePostModalOpen}
-                onRequestClose={closeCreatePostModal}
-                style={createProjectModalStyles}
-            >
-                <CreateProjModalContainer>
-                    <ModalHeader>Create Post</ModalHeader>
-                    <TextInputGroup>
-                        <span>Post Image</span>
-                        <div {...getRootProps({ style })}>
-                            <input {...getInputProps()} />
-                            <UploadFileOutlined />
-                            <p>
-                                {cpPic != null
-                                    ? `${cpPic.path.substring(
-                                          0,
-                                          Math.min(cpPic.path.length, 10)
-                                      )}...`
-                                    : "Upload image"}
-                            </p>
-                        </div>
-                    </TextInputGroup>
-                    <TextInputGroup>
-                        <span>Caption</span>
-                        <CustomInput
-                            value={cpCaption}
-                            onChange={(e) => {
-                                setCpCaption(e.target.value);
-                            }}
-                            type="text"
-                            placeholder="Post Description"
-                        />
-                    </TextInputGroup>
-                    <TextInputGroup>
-                        <span>Post Type</span>
-                        <PostTypeSwitchContainer>
-                            Everyone
-                            <Switch
-                                checked={postType}
-                                onChange={(e) => {
-                                    setPostType(e.target.checked);
-                                }}
-                                inputProps={{ "aria-label": "controlled" }}
-                            />
-                            Members Only
-                        </PostTypeSwitchContainer>
-                    </TextInputGroup>
-
-                    <CreateProjModalBottom>
-                        <BecomeMemberBtn
-                            disabled={postSaveLoading}
-                            onClick={savePost}
-                        >
-                            {!postSaveLoading ? (
-                                "Publish"
-                            ) : (
-                                <WhiteLoader label={"Sending..."} />
-                            )}
-                        </BecomeMemberBtn>
-                    </CreateProjModalBottom>
-                </CreateProjModalContainer>
-            </Modal>
-            <Modal
-                isOpen={isCreatorSetupModalOpen}
-                onRequestClose={closeCreatorSetupModal}
-                style={createProjectModalStyles}
-            >
-                <CreateProjModalContainer>
-                    <ModalHeader>Creator Setup</ModalHeader>
-                    <TextInputGroup>
-                        <span>Your Name</span>
-                        <CustomInput
-                            value={cdName}
-                            onChange={(e) => {
-                                setCdName(e.target.value);
-                            }}
-                            type="text"
-                            placeholder="Creator Name"
-                        />
-                    </TextInputGroup>
-                    <TextInputGroup>
-                        <span>Your work Description</span>
-                        <CustomInput
-                            value={cdDesc}
-                            onChange={(e) => {
-                                setCdDesc(e.target.value);
-                            }}
-                            type="text"
-                            placeholder="Describe your work"
-                        />
-                    </TextInputGroup>
-                    <TextInputGroup>
-                        <span>Profile Picture URL</span>
-                        <div {...getRootProps({ style })}>
-                            <input {...getInputProps()} />
-                            <UploadFileOutlined />
-                            <p>
-                                {cdProfilePicFile != null
-                                    ? `${cdProfilePicFile.path.substring(
-                                          0,
-                                          Math.min(
-                                              cdProfilePicFile.path.length,
-                                              10
-                                          )
-                                      )}...`
-                                    : "Upload image"}
-                            </p>
-                        </div>
-                        {/* <CustomInput
-                            type="file"
-                            onChange={(e) => {
-                                setCdProfilePicFile(e.target.files[0]);
-                            }}
-                        /> */}
-                    </TextInputGroup>
-                    <TextInputGroup>
-                        <span>Social Media URL</span>
-                        <CustomInput
-                            value={cdSocialURL}
-                            onChange={(e) => {
-                                setCdSocialURL(e.target.value);
-                            }}
-                            type="text"
-                            placeholder="Instagram/YouTube/Spotify"
-                        />
-                    </TextInputGroup>
-                    <TextInputGroup>
-                        <span>Milestone Goal (Recommended: 10)</span>
-                        <CustomInput
-                            value={cdMilestone}
-                            onChange={(e) => {
-                                setCdMilestone(e.target.value);
-                            }}
-                            type="text"
-                            placeholder="Number of Crypts for Milestone"
-                        />
-                    </TextInputGroup>
-                    <CreateProjModalBottom>
-                        <BecomeMemberBtn
-                            disabled={creatorDetailsSaveLoading}
-                            onClick={saveCreatorDetails}
-                        >
-                            {!creatorDetailsSaveLoading ? (
-                                "Save"
-                            ) : (
-                                <WhiteLoader label={"Saving..."} />
-                            )}
-                        </BecomeMemberBtn>
-                    </CreateProjModalBottom>
-                </CreateProjModalContainer>
-            </Modal>
-            <Modal
-                isOpen={isCreateProjectModalOpen}
-                onRequestClose={closeCreateProjectModal}
-                style={createProjectModalStyles}
-            >
-                <CreateProjModalContainer>
-                    <ModalHeader>Request Funds</ModalHeader>
-                    <TextInputGroup>
-                        <span>Request Name</span>
-                        <CustomInput
-                            type="text"
-                            value={votingName}
-                            onChange={(e) => {
-                                setVotingName(e.target.value);
-                            }}
-                            placeholder="What are you creating?"
-                        />
-                    </TextInputGroup>
-                    <TextInputGroup>
-                        <span>Request Description</span>
-                        <CustomInput
-                            type="text"
-                            value={votingDesc}
-                            onChange={(e) => {
-                                setVotingDesc(e.target.value);
-                            }}
-                            placeholder="Describe why you need the funds"
-                        />
-                    </TextInputGroup>
-                    <CreateProjModalBottom>
-                        <FullFlexDiv>
-                            <TextInputGroup>
-                                <span>Required Amount in MATIC</span>
-                                <CustomInput
-                                    value={requestAmount}
-                                    onChange={(e) => {
-                                        setRequestAmount(e.target.value);
-                                    }}
-                                    type="text"
-                                    placeholder="₹"
-                                />
-                            </TextInputGroup>
-                        </FullFlexDiv>
-                        <BecomeMemberBtn onClick={initiateVotingForRequest}>
-                            {requestFundsLoading ? (
-                                <WhiteLoader label={"Requesting..."} />
-                            ) : (
-                                "Request"
-                            )}
-                        </BecomeMemberBtn>
-                    </CreateProjModalBottom>
-                </CreateProjModalContainer>
-            </Modal>
             <Sidebar />
             <CreatorPageContainer>
-                <Navbar title={"DASHBOARD"} />
+                <Navbar title={"CHATS"} />
+                <ChatsWindowOuterContainer>
+                    <ChatsWindow>
+                        <ChatsWindowHeader>
+                            <ChatWindowHeaderAvatar src={creatorInfo.profilePic}/>
+                            {creatorInfo.fullName}</ChatsWindowHeader>
+                        <ChatsListContainer>
+                            <ChatsListContainerScroll>
 
-                <SetupMessageContainer>
-                    <SetupMessageBox>
-                        <span>
-                            Hey there, your first step would be to setup your
-                            account with some basic details!
-                        </span>
-                        <SetupMessageBtn onClick={openCreatorSetupModal}>
-                            SETUP
-                        </SetupMessageBtn>
-                    </SetupMessageBox>
-                </SetupMessageContainer>
-                <FeedContainer>
-                    <ActionButtonsList>
-                        <ActionButton onClick={openCreatePostModal}>
-                            <ActionButtonIcon>
-                                <MarkAsUnreadIcon fontSize="large"/>
-                            </ActionButtonIcon>
-                            Create Post
-                        </ActionButton>
-                        <ActionButton onClick={openCreateProjectModal}>
-                            <ActionButtonIcon>
-                                <PaidRounded fontSize="large"/>
-                            </ActionButtonIcon>
-                            Request Funds
-                        </ActionButton>
-                        <ActionButton onClick={() => {
-                            getVoteDetails();
-                            setIsVoteModalOpen(true);
-                        }}>
-                            <ActionButtonIcon>
-                                <PollRounded fontSize="large"/>
-                            </ActionButtonIcon>
-                            View Votes
-                        </ActionButton>
-                        <ActionButton onClick={handleCloseVotes}>
-                            <ActionButtonIcon>
-                                {
-                                    closeVotesLoading ? <WhiteLoader label={"Sending..."} /> : <TaskAltRounded fontSize="large" />
-                                }
-                            </ActionButtonIcon>
-                            Close Votes & Transfer
-                        </ActionButton>
-                    </ActionButtonsList>
-                </FeedContainer>
+                            {
+                                chatsList.map((chat, index) => {
+                                return <ChatBubbleContainer key={index} isMe={chat.walletAddress == state.user.walletAddress}>
+                                        <ChatBubble isMe={chat.walletAddress == state.user.walletAddress}>
+                                            <ChatAuthor>{chat.userName}</ChatAuthor>
+                                            {chat.chatBody}
+                                            <ChatTime>{moment(chat.createdAt).format("hh:mm A")}</ChatTime>
+                                        </ChatBubble>
+                                    </ChatBubbleContainer>
+                                })
+                            }
+                            
+                            </ChatsListContainerScroll>
+                        </ChatsListContainer>
+                        <ChatsMessageInputContainer>
+                            <ChatMessageInput type="text" value={chatBody} onChange={(e) => {
+                                setChatBody(e.target.value);
+                            }} placeholder="Type your message here"/>
+                            <ChatSendBtn onClick={sendMessage}>
+                                <SendRounded style={{color: "white"}}/>
+                            </ChatSendBtn>
+                        </ChatsMessageInputContainer>
+                    </ChatsWindow>
+                </ChatsWindowOuterContainer>
+                
             </CreatorPageContainer>
         </OuterFrameContainer>
     );
 };
 
-export default Dashboard;
+export default Chats;

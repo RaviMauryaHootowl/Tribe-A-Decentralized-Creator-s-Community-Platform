@@ -13,6 +13,7 @@ import RedirectCreator from "./pages/Redirect/RedirectCreator";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import CryptsPage from "./pages/CryptsPage/CryptsPage";
 import LandingPage from "./pages/LandingPage/LandingPage";
+import Chats from "./pages/Chats/Chats";
 
 const App = () => {
     const router = createBrowserRouter([
@@ -55,6 +56,10 @@ const App = () => {
         {
           path: "/crypts",
           element: <CryptsPage />
+        },
+        {
+          path: "/chats/:id",
+          element: <Chats />
         },
     ]);
 
