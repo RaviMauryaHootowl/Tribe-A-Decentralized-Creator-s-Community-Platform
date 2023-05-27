@@ -191,9 +191,10 @@ contract crowd_funding {
             // 2. redeem the amount to all contributors
             for (uint256 i = 0; i < currentMilestone.noOfContributors; i++) {
                 uint256 id = currentMilestone.contributorsList[i];
-                idToContributor[id].claimableAmount +=
-                    (currentMilestone.contributorIdToAmount[id] * 5) /
-                    100;
+                uint256 claim = (currentMilestone.contributorIdToAmount[id] * 5) /100;
+                idToContributor[id].claimableAmount += claim;
+                creator.activePoolAmount -= claim;
+                    
                 currentMilestone.contributorIdToAmount[id] = 0;
             }
 
@@ -335,6 +336,7 @@ contract crowd_funding {
 
         if (currentVoting.upScore > currentVoting.downScore) {
             creator.claimAmount += currentVoting.amount;
+            creator.redeemableAmount -= currentVoting.amount;
         }
         currentVoting.isVentureActive = false;
     }
