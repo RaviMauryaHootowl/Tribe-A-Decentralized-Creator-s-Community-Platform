@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import logo from "../images/logo.svg";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
@@ -32,6 +32,7 @@ const SideOptionCard = styled.div`
     margin-bottom: 1rem;
     cursor: pointer;
     transition: all 0.5s ease;
+    background-color: ${(props) => props.isSelected ? "#383838" : "#00000000"};
 
     span {
         margin-left: 0.5rem;
@@ -45,19 +46,17 @@ const SideOptionCard = styled.div`
 
 const Sidebar = () => {
     const { state, dispatch } = useContext(StoreContext);
+    const location = useLocation();
     const navigate = useNavigate();
 
-    // useEffect(() => {
-    //     if(!state.user.emailId){
-    //         navigate("/");
-    //     }
-    // }, [state.user])
+    const pathname = location.pathname;
 
     return (
         <SideBarMenu>
             <AppLogo src={logo} />
             {state.user.isCreator ? (
                 <SideOptionCard
+                    isSelected={pathname.includes("dashboard")}
                     onClick={() => {
                         navigate("/dashboard");
                     }}
@@ -67,6 +66,7 @@ const Sidebar = () => {
                 </SideOptionCard>
             ) : (
                 <SideOptionCard
+                    isSelected={pathname.includes("home")}
                     onClick={() => {
                         navigate("/home");
                     }}
@@ -76,6 +76,7 @@ const Sidebar = () => {
                 </SideOptionCard>
             )}
             <SideOptionCard
+                isSelected={pathname.includes("discover")}
                 onClick={() => {
                     navigate("/discover");
                 }}
@@ -84,6 +85,7 @@ const Sidebar = () => {
                 <span>Discover</span>
             </SideOptionCard>
             <SideOptionCard
+                isSelected={pathname.includes("crypts")}
                 onClick={() => {
                     navigate("/crypts");
                 }}
@@ -91,11 +93,15 @@ const Sidebar = () => {
                 <LocalFireDepartmentRoundedIcon />
                 <span>Crypts</span>
             </SideOptionCard>
-            <SideOptionCard>
+            <SideOptionCard
+                isSelected={pathname.includes("account")}
+            >
                 <AccountCircleRoundedIcon />
                 <span>Account</span>
             </SideOptionCard>
-            <SideOptionCard>
+            <SideOptionCard
+                isSelected={pathname.includes("settings")}
+            >
                 <SettingsSuggestRoundedIcon />
                 <span>Settings</span>
             </SideOptionCard>

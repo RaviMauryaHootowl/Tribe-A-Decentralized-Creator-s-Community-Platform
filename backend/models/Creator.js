@@ -12,6 +12,9 @@ const creatorSchema = new Schema({
     description: {
         type: String
     },
+    benefits: {
+        type: String
+    },
     socialUrl: {
         type: String
     },

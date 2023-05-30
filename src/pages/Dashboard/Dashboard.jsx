@@ -43,7 +43,7 @@ import WhiteLoader from "../../components/WhiteLoader";
 import { useDropzone } from "react-dropzone";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
-import MarkAsUnreadIcon from '@mui/icons-material/MarkAsUnread';
+import MarkAsUnreadIcon from "@mui/icons-material/MarkAsUnread";
 
 const createProjectModalStyles = {
     content: {
@@ -575,8 +575,8 @@ const ActionButton = styled.button`
     margin: 0 1rem 1rem 0;
     flex-direction: column;
     align-items: center;
-    &:hover{
-        background-color: #1E5ED9;
+    &:hover {
+        background-color: #1e5ed9;
         color: white;
     }
 `;
@@ -617,8 +617,10 @@ const Dashboard = () => {
     const { state, dispatch } = useContext(StoreContext);
     const navigate = useNavigate();
     const [requestAmount, setRequestAmount] = useState("");
+    const [creatorInfo, setCreatorInfo] = useState({});
     const [cdName, setCdName] = useState("");
     const [cdDesc, setCdDesc] = useState("");
+    const [cdBenefits, setCdBenefits] = useState("");
     const [cdProfilePicURL, setCdProfilePicURL] = useState("");
     const [cdProfilePicFile, setCdProfilePicFile] = useState(null);
     const [cdSocialURL, setCdSocialURL] = useState("");
@@ -628,6 +630,7 @@ const Dashboard = () => {
     const [votingName, setVotingName] = useState("");
     const [votingDesc, setVotingDesc] = useState("");
     const [votingInfo, setVotingInfo] = useState({});
+    const [redeemableAmount, setRedeemableAmount] = useState(0);
     const [creatorDetailsSaveLoading, setCreatorDetailsSaveLoading] =
         useState(false);
     const [requestFundsLoading, setRequestFundsLoading] = useState(false);
@@ -637,6 +640,9 @@ const Dashboard = () => {
 
     useEffect(() => {
         console.log(state.user);
+        if (state.user.walletAddress) {
+            fetchCreatorInfo(state.user.walletAddress);
+        }
     }, [state.user]);
 
     const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] =
@@ -661,6 +667,7 @@ const Dashboard = () => {
     };
 
     const openCreateProjectModal = () => {
+        fetchCreatorRedeemableAmount();
         setIsCreateProjectModalOpen(true);
     };
 
@@ -706,6 +713,56 @@ const Dashboard = () => {
         }),
         [isFocused, isDragAccept, isDragReject]
     );
+
+    const fetchCreatorInfo = async (id) => {
+        try {
+            const res = await axios.get(
+                `${process.env.REACT_APP_API}/user/getCreatorInfo?walletAddress=${id}`
+            );
+            setCreatorInfo(res.data);
+        } catch (err) {
+            console.log(err);
+            setCreatorInfo({});
+        }
+    };
+
+    const fetchCreatorRedeemableAmount = async () => {
+        try {
+            const magic = new Magic(
+                process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
+                {
+                    network: {
+                        rpcUrl: process.env.REACT_APP_RPC_URL,
+                        chainId: 80001,
+                    },
+                    extensions: [new OAuthExtension()],
+                }
+            );
+
+            console.log(magic);
+
+            const rpcProvider = new ethers.providers.Web3Provider(
+                magic.rpcProvider
+            );
+            const signer = rpcProvider.getSigner();
+            const contractInstance = new ethers.Contract(
+                ContractAddress,
+                ContractABI,
+                signer
+            );
+            console.log(contractInstance);
+
+            let resFromSC;
+            resFromSC = await contractInstance.viewCreatorInfo(
+                state.user.walletAddress
+            );
+            console.log(resFromSC);
+            console.log(parseInt(resFromSC[1].toString()));
+            setRedeemableAmount(parseInt(resFromSC[1].toString()));
+        } catch (e) {
+            console.log(e);
+        }
+    }
 
     const getVoteDetails = async () => {
         try {
@@ -905,6 +962,7 @@ const Dashboard = () => {
         if (
             isValid(cdName) &&
             isValid(cdDesc) &&
+            isValid(cdBenefits) &&
             cdProfilePicFile != null &&
             isValid(cdSocialURL) &&
             isValid(cdMilestone)
@@ -919,7 +977,6 @@ const Dashboard = () => {
                 );
                 console.log(imageUploadRes);
 
-                
                 const milestoneInWei = ethers.utils.parseEther(
                     `${cdMilestone}`
                 );
@@ -961,6 +1018,7 @@ const Dashboard = () => {
                         emailId: state.user.emailId,
                         name: cdName,
                         description: cdDesc,
+                        benefits: cdBenefits,
                         profilePic: imageUploadRes.data,
                         socialUrl: cdSocialURL,
                     }
@@ -968,6 +1026,7 @@ const Dashboard = () => {
                 console.log(res.data);
                 setCreatorDetailsSaveLoading(false);
                 toast.success("Creator details saved! 🥳");
+                fetchCreatorInfo();
                 closeCreatorSetupModal();
             } catch (e) {
                 setCreatorDetailsSaveLoading(false);
@@ -1136,6 +1195,17 @@ const Dashboard = () => {
                         />
                     </TextInputGroup>
                     <TextInputGroup>
+                        <span>Perks & Benefits</span>
+                        <CustomInput
+                            value={cdBenefits}
+                            onChange={(e) => {
+                                setCdBenefits(e.target.value);
+                            }}
+                            type="text"
+                            placeholder="What perks & benefits can you provide?"
+                        />
+                    </TextInputGroup>
+                    <TextInputGroup>
                         <span>Profile Picture URL</span>
                         <div {...getRootProps({ style })}>
                             <input {...getInputProps()} />
@@ -1234,7 +1304,7 @@ const Dashboard = () => {
                                         setRequestAmount(e.target.value);
                                     }}
                                     type="text"
-                                    placeholder="₹"
+                                    placeholder={`Maximum ${(redeemableAmount/1e18).toFixed(4)} MATIC`}
                                 />
                             </TextInputGroup>
                         </FullFlexDiv>
@@ -1252,45 +1322,52 @@ const Dashboard = () => {
             <CreatorPageContainer>
                 <Navbar title={"DASHBOARD"} />
 
-                <SetupMessageContainer>
-                    <SetupMessageBox>
-                        <span>
-                            Hey there, your first step would be to setup your
-                            account with some basic details!
-                        </span>
-                        <SetupMessageBtn onClick={openCreatorSetupModal}>
-                            SETUP
-                        </SetupMessageBtn>
-                    </SetupMessageBox>
-                </SetupMessageContainer>
+                {creatorInfo.profilePic == "" && (
+                    <SetupMessageContainer>
+                        <SetupMessageBox>
+                            <span>
+                                Hey there, your first step would be to setup
+                                your account with some basic details!
+                            </span>
+                            <SetupMessageBtn onClick={openCreatorSetupModal}>
+                                SETUP
+                            </SetupMessageBtn>
+                        </SetupMessageBox>
+                    </SetupMessageContainer>
+                )}
+
                 <FeedContainer>
                     <ActionButtonsList>
                         <ActionButton onClick={openCreatePostModal}>
                             <ActionButtonIcon>
-                                <MarkAsUnreadIcon fontSize="large"/>
+                                <MarkAsUnreadIcon fontSize="large" />
                             </ActionButtonIcon>
                             Create Post
                         </ActionButton>
                         <ActionButton onClick={openCreateProjectModal}>
                             <ActionButtonIcon>
-                                <PaidRounded fontSize="large"/>
+                                <PaidRounded fontSize="large" />
                             </ActionButtonIcon>
                             Request Funds
                         </ActionButton>
-                        <ActionButton onClick={() => {
-                            getVoteDetails();
-                            setIsVoteModalOpen(true);
-                        }}>
+                        <ActionButton
+                            onClick={() => {
+                                getVoteDetails();
+                                setIsVoteModalOpen(true);
+                            }}
+                        >
                             <ActionButtonIcon>
-                                <PollRounded fontSize="large"/>
+                                <PollRounded fontSize="large" />
                             </ActionButtonIcon>
                             View Votes
                         </ActionButton>
                         <ActionButton onClick={handleCloseVotes}>
                             <ActionButtonIcon>
-                                {
-                                    closeVotesLoading ? <WhiteLoader label={"Sending..."} /> : <TaskAltRounded fontSize="large" />
-                                }
+                                {closeVotesLoading ? (
+                                    <WhiteLoader label={"Sending..."} />
+                                ) : (
+                                    <TaskAltRounded fontSize="large" />
+                                )}
                             </ActionButtonIcon>
                             Close Votes & Transfer
                         </ActionButton>

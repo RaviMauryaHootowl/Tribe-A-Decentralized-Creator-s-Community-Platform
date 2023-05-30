@@ -232,7 +232,8 @@ contract crowd_funding {
             creator.totalFundRaised;
     }
 
-    function viewCreatorInfo(uint256 creatorId) public view returns(uint256, uint256, uint256){
+    function viewCreatorInfo(address creatorAddress) public view returns(uint256, uint256, uint256, uint256){
+        uint256 creatorId = creatorsAddressToID[creatorAddress];
         Creator storage creator = idToCreators[creatorId];
         //  uint256 noOfProjects;
         // mapping(uint256 => VotingVenture) idToVotingVenture;
@@ -246,7 +247,7 @@ contract crowd_funding {
         // uint256 totalFundRaised;
         // Milestone currentActiveMilestone;
         // uint256 noOfMilestones;
-        return (creator.noOfContributors, creator.refundableAmount, creator.currentActiveMilestone.noOfContributors);
+        return (creator.noOfContributors, creator.redeemableAmount, creator.refundableAmount, creator.currentActiveMilestone.noOfContributors);
     }
 
     function viewClaimAmount(address owner) public view returns(uint256){

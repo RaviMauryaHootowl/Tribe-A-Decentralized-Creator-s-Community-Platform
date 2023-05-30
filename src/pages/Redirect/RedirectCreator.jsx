@@ -223,7 +223,7 @@ const RedirectCreator = () => {
 
     useEffect(() => {
         if (waitForTransfer == 0) {
-            navigate("/home");
+            navigate("/dashboard");
         }
     }, [waitForTransfer]);
 

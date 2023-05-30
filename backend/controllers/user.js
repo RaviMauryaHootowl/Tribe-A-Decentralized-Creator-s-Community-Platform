@@ -124,7 +124,9 @@ exports.getAllCreators = async (req, res) => {
         const updatedCreatorList = [];
         for(let i = 0; i < creatorsList.length; i++){
             const creatorInfo = await Creator.findOne({emailId: creatorsList[i].emailId});
-            updatedCreatorList.push({...(creatorsList[i].toObject()), ...(creatorInfo.toObject())})
+            if(creatorInfo.profilePic != ""){
+                updatedCreatorList.push({...(creatorsList[i].toObject()), ...(creatorInfo.toObject())})
+            }
         }
         return res.send(updatedCreatorList);
     } catch (error) {
@@ -135,7 +137,7 @@ exports.getAllCreators = async (req, res) => {
 
 exports.setCreatorInfo = async (req, res) => {
     try{
-        const {emailId, name, description, profilePic, socialUrl} = req.body;
+        const {emailId, name, description, benefits, profilePic, socialUrl} = req.body;
         console.log(emailId);
         const userInfo = await User.findOne({emailId});
         if(!userInfo){
@@ -147,7 +149,7 @@ exports.setCreatorInfo = async (req, res) => {
         ).exec();
         await Creator.findOneAndUpdate(
             {emailId},
-            {description, profilePic, socialUrl}
+            {description, benefits, profilePic, socialUrl}
         ).exec();
 
         const updatedUserInfo = await User.findOne({emailId});

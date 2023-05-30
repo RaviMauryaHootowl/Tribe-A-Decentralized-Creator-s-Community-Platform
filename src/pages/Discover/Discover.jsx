@@ -1,18 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
-import logo from "../../images/logo.svg";
-import cover from "../../images/cover.png";
-import dp from "../../images/dp.png";
-import spotify from "../../images/spotify.png";
-import youtube from "../../images/youtube.png";
-import music from "../../images/musicImage.png";
-import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
-import TravelExploreRoundedIcon from "@mui/icons-material/TravelExploreRounded";
-import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
-import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
-import SettingsSuggestRoundedIcon from "@mui/icons-material/SettingsSuggestRounded";
+import litIcon from "../../images/lit.svg";
 import Modal from "react-modal";
-import { Add, CloseOutlined, UploadFile } from "@mui/icons-material";
 import { StoreContext } from "../../utils/Store";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -160,17 +149,73 @@ const CreatorProfilePic = styled.img`
     object-fit: cover;
 `;
 
-const CreatorName = styled.span`
+const CreatorDetails = styled.div`
+    display: flex;
+    flex-direction: column;
+    margin-left: 1rem;
     color: white;
-    padding-left: 1rem;
-    font-size: 1.1rem;
-    font-weight: 600;
+`;
+
+const CreatorName = styled.span`
+    font-size: 1.3rem;
+    font-weight: bold;
+`;
+
+const CreatorStats = styled.span`
+    display: flex;
+    align-items: center;
+    font-size: 1.2rem;
+
+    img{
+        margin-left: 0.3rem;
+        height: 1.2rem;
+    }
+`;
+
+const EmptyFeedContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem 2rem;
+    color: #8f8f8f;
+`;
+
+const CreatorsTopActions = styled.div`
+    padding: 1rem 2rem;
+    display: flex;
+`;
+
+const CreatorsFilterContainer = styled.div`
+    display: flex;
+    flex-direction: row;
+    background-color: #474747;
+    border-radius: 8px;
+    overflow: hidden;
+`;
+
+const CreatorsFilter = styled.button`
+    padding: 0.8rem 1rem;
+    background-color: ${(props) => props.isSelected ? "#1660EE" : "#00000000"};
+    color: white;
+    outline: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.5s ease;
+    font-size: 1.02rem;
+    
+    &:hover{
+        background-color: #4c8afe;
+    }
 `;
 
 const Discover = () => {
     const { state, dispatch } = useContext(StoreContext);
     const navigate = useNavigate();
     const [creatorsList, setCreatorsList] = useState([]);
+    const [filterMode, setFilterMode] = useState(0);
 
     useEffect(() => {
         console.log(state.user);
@@ -254,6 +299,22 @@ const Discover = () => {
             <Sidebar />
             <CreatorPageContainer>
                 <Navbar title={"DISCOVER CREATORS"} />
+                <CreatorsTopActions>
+                    <CreatorsFilterContainer>
+                        <CreatorsFilter isSelected={filterMode == 0}
+                            onClick={() => { setFilterMode(0); }}
+                        >Trending</CreatorsFilter>
+                        <CreatorsFilter isSelected={filterMode == 1}
+                            onClick={() => { setFilterMode(1); }}
+                        >Most Popular</CreatorsFilter>
+                        <CreatorsFilter isSelected={filterMode == 2}
+                            onClick={() => { setFilterMode(2); }}
+                        >New Talents</CreatorsFilter>
+                    </CreatorsFilterContainer>
+                </CreatorsTopActions>
+                {
+                    creatorsList.length == 0 && <EmptyFeedContainer>No Creators Found</EmptyFeedContainer>
+                }
                 <CreatorsListGrid>
                     {creatorsList.map((creator, index) => {
                         return (
@@ -265,7 +326,10 @@ const Discover = () => {
                                 }}
                             >
                                 <CreatorProfilePic src={creator.profilePic != "" ? creator.profilePic : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460__340.png"} />
-                                <CreatorName>{creator.fullName}</CreatorName>
+                                <CreatorDetails>
+                                    <CreatorName>{creator.fullName}</CreatorName>
+                                    <CreatorStats>{creator.members.length} <img src={litIcon} /> </CreatorStats>
+                                </CreatorDetails>
                             </CreatorCard>
                         );
                     })}

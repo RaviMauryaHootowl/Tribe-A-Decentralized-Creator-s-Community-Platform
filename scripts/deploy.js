@@ -9,7 +9,7 @@ const hre = require("hardhat");
 async function main() {
 
   const Funding = await hre.ethers.getContractFactory("crowd_funding");
-  const funding = await Funding.deploy("0x69015912AA33720b842dCD6aC059Ed623F28d9f7");
+  const funding = await Funding.deploy();
 
   await funding.deployed();
 

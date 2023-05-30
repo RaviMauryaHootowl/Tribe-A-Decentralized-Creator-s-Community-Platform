@@ -48,8 +48,7 @@ exports.getPostsByUserWallet = async (req, res) => {
                 validPostsList.push({...(post.toObject()), profilePic: creator.profilePic, fullName: user.fullName})
             });
         }
-        // console.log(validPostsList[0].createdAt);
-        console.log(new Date(Date.parse(validPostsList[0].createdAt)));
+        
         validPostsList.sort((a, b) => {
             return b.createdAt - a.createdAt;
         });

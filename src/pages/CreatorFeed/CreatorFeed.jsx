@@ -6,7 +6,7 @@ import spotify from "../../images/spotify.png";
 import youtube from "../../images/youtube.png";
 import music from "../../images/musicImage.png";
 import Modal from "react-modal";
-import { Add, CloseOutlined, UploadFile } from "@mui/icons-material";
+import { Add, CloseOutlined, UploadFile, ViewTimelineRounded } from "@mui/icons-material";
 import { StoreContext } from "../../utils/Store";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
@@ -19,6 +19,7 @@ import Navbar from "../../components/Navbar";
 import { toast } from "react-toastify";
 import WhiteLoader from "../../components/WhiteLoader";
 import moment from "moment";
+import { isValid } from "../../utils/utils";
 
 const createProjectModalStyles = {
     content: {
@@ -309,8 +310,8 @@ const WorkCard = styled.div`
     transition: all 0.5s ease;
 
     img {
-        height: 1.5rem;
-        margin-right: 0.8rem;
+        height: 1.4rem;
+        margin-right: 0.6rem;
     }
 
     &:hover {
@@ -593,6 +594,14 @@ const CreatorFeed = ({ match }) => {
     };
 
     const handleBecomeMember = async () => {
+        if(!isValid(becomeMemberValue)){
+            toast.error("Enter correct value!");
+            return;
+        }else if(parseFloat(becomeMemberValue) < 0.1){
+            console.log(parseFloat(becomeMemberValue));
+            toast.error("You need to contribute atleast 0.1 MATIC");
+            return;
+        }
         try {
             setIsBecomeMemberLoading(true);
             const magic = new Magic(
@@ -851,6 +860,10 @@ const CreatorFeed = ({ match }) => {
             >
                 <CreateProjModalContainer>
                     <ModalHeader>Become Member</ModalHeader>
+                    <TextViewGroup>
+                        <span>Perks & Benefits</span>
+                        <TextViewContent>{creatorInfo.benefits}</TextViewContent>
+                    </TextViewGroup>
                     <TextInputGroup>
                         <span>Number of Crypts?</span>
                         <CustomInput
@@ -861,7 +874,7 @@ const CreatorFeed = ({ match }) => {
                             type="number"
                             name=""
                             id=""
-                            placeholder="1 Crypt = 1 MATIC"
+                            placeholder="in MATIC (Minimum 0.1 MATIC)"
                         />
                     </TextInputGroup>
                     <CreateProjModalBottom>
@@ -1052,7 +1065,7 @@ const CreatorFeed = ({ match }) => {
                                 rel="noopener noreferrer"
                             >
                                 <WorkCard>
-                                    <img src={spotify} alt="" />
+                                    <img src={`http://www.google.com/s2/favicons?domain=${creatorInfo.socialUrl}`} alt="" />
                                     Website
                                 </WorkCard>
                             </a>
