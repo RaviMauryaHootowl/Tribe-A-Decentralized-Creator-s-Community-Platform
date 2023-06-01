@@ -215,7 +215,7 @@ const Discover = () => {
     const { state, dispatch } = useContext(StoreContext);
     const navigate = useNavigate();
     const [creatorsList, setCreatorsList] = useState([]);
-    const [filterMode, setFilterMode] = useState(0);
+    const [filterMode, setFilterMode] = useState(1);
 
     useEffect(() => {
         console.log(state.user);
@@ -224,6 +224,10 @@ const Discover = () => {
     useEffect(() => {
         fetchCreatorsList();
     }, []);
+
+    useEffect(() => {
+        fetchCreatorsList();
+    }, [filterMode]);
 
     const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] =
         useState(false);
@@ -242,6 +246,11 @@ const Discover = () => {
                 `${process.env.REACT_APP_API}/user/getAllCreators`
             );
             console.log(res.data);
+            if(filterMode == 1){
+                res.data.sort((b,a) => (a.members.length > b.members.length) ? 1 : ((b.members.length > a.members.length) ? -1 : 0));
+            }else{
+                res.data.reverse();
+            }
             setCreatorsList(res.data);
         } catch (err) {
             console.log(err);
@@ -301,9 +310,6 @@ const Discover = () => {
                 <Navbar title={"DISCOVER CREATORS"} />
                 <CreatorsTopActions>
                     <CreatorsFilterContainer>
-                        <CreatorsFilter isSelected={filterMode == 0}
-                            onClick={() => { setFilterMode(0); }}
-                        >Trending</CreatorsFilter>
                         <CreatorsFilter isSelected={filterMode == 1}
                             onClick={() => { setFilterMode(1); }}
                         >Most Popular</CreatorsFilter>

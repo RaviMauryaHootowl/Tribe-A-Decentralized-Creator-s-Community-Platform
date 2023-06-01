@@ -1,18 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
-import logo from "../../images/logo.svg";
 import cover from "../../images/cover.png";
-import dp from "../../images/dp.png";
-import spotify from "../../images/spotify.png";
-import youtube from "../../images/youtube.png";
-import music from "../../images/musicImage.png";
-import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
-import TravelExploreRoundedIcon from "@mui/icons-material/TravelExploreRounded";
-import LocalFireDepartmentRoundedIcon from "@mui/icons-material/LocalFireDepartmentRounded";
-import AccountCircleRoundedIcon from "@mui/icons-material/AccountCircleRounded";
-import SettingsSuggestRoundedIcon from "@mui/icons-material/SettingsSuggestRounded";
-import Modal from "react-modal";
-import { Add, CloseOutlined, UploadFile } from "@mui/icons-material";
 import { StoreContext } from "../../utils/Store";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
@@ -21,8 +9,10 @@ import { OAuthExtension } from "@magic-ext/oauth";
 import { ethers } from "ethers";
 import { ContractABI, ContractAddress } from "../../utils/constants";
 import Sidebar from "../../components/Sidebar";
-import { isValid } from "../../utils/utils";
 import axios from "axios";
+import litIcon from "../../images/lit.svg";
+import WhiteLoader from "../../components/WhiteLoader";
+import { toast } from "react-toastify";
 
 const createProjectModalStyles = {
     content: {
@@ -470,20 +460,77 @@ const ClaimCard = styled.div`
     cursor: pointer;
 `;
 
+const CreatorsListGrid = styled.div`
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    width: 100%;
+`;
+
+const CreatorCard = styled.div`
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background-color: #474747;
+    color: white;
+    border-radius: 1rem;
+    margin-bottom: 1rem;
+    color: black;
+    cursor: pointer;
+`;
+
+const CreatorProfilePic = styled.img`
+    width: 5rem;
+    height: 5rem;
+    border-radius: 50vh;
+    object-fit: cover;
+`;
+
+const CreatorDetails = styled.div`
+    display: flex;
+    flex-direction: column;
+    margin-left: 1rem;
+    color: white;
+`;
+
+const CreatorName = styled.span`
+    font-size: 1.3rem;
+    font-weight: bold;
+`;
+
+const CreatorStats = styled.span`
+    display: flex;
+    align-items: center;
+    font-size: 1.2rem;
+
+    img{
+        margin-left: 0.3rem;
+        height: 1.2rem;
+    }
+`;
+
 const CryptsPage = () => {
     const { state, dispatch } = useContext(StoreContext);
     const navigate = useNavigate();
     const [claimAmount, setClaimAmount] = useState("");
+    const [subscribedList, setSubscribedList] = useState([]);
+    const [isSubsLoading, setIsSubsLoading] = useState(false);
+    const [isClaiming, setIsClaiming] = useState(false);
 
     useEffect(() => {
         console.log(state.user);
-        if(state.user.walletAddress){
+        if (state.user.walletAddress) {
             getClaimableInfo();
+            fetchSubscribedList(state.user.emailId);
         }
     }, [state.user]);
 
-    const getClaimableInfo = async () => {
-        try{
+    const fetchSubscribedList = async (id) => {
+        try {
+            setIsSubsLoading(true);
+            const res = await axios.get(
+                `${process.env.REACT_APP_API}/user/getSubscriptionListOfUser?emailId=${id}`
+            );
 
             const magic = new Magic(
                 process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
@@ -495,9 +542,9 @@ const CryptsPage = () => {
                     extensions: [new OAuthExtension()],
                 }
             );
-    
+
             console.log(magic);
-    
+
             const rpcProvider = new ethers.providers.Web3Provider(
                 magic.rpcProvider
             );
@@ -509,19 +556,74 @@ const CryptsPage = () => {
                 signer
             );
             console.log(contractInstance);
-    
-            const resFromSC = await contractInstance.viewClaimAmount(state.user.walletAddress);
-    
+
+            const resFromSC = await contractInstance.getSubscriberList();
+
+            console.log(resFromSC);
+            const valueArray = resFromSC[0];
+            const addressArray = resFromSC[1];
+
+            const subsList = res.data.map((creator) => {
+                return {
+                    ...creator,
+                    amount: valueArray[ addressArray.findIndex((add => add == creator.walletAddress)) ]
+                };
+            })
+
+
+            console.log(res.data);
+            setIsSubsLoading(false);
+            setSubscribedList(subsList);
+
+            
+
+        } catch (e) {
+            setIsSubsLoading(false);
+            console.log(e);
+        }
+    };
+
+    const getClaimableInfo = async () => {
+        try {
+            const magic = new Magic(
+                process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
+                {
+                    network: {
+                        rpcUrl: process.env.REACT_APP_RPC_URL,
+                        chainId: 80001,
+                    },
+                    extensions: [new OAuthExtension()],
+                }
+            );
+
+            console.log(magic);
+
+            const rpcProvider = new ethers.providers.Web3Provider(
+                magic.rpcProvider
+            );
+            const signer = rpcProvider.getSigner();
+            console.log(await signer.getAddress());
+            const contractInstance = new ethers.Contract(
+                ContractAddress,
+                ContractABI,
+                signer
+            );
+            console.log(contractInstance);
+
+            const resFromSC = await contractInstance.viewClaimAmount(
+                state.user.walletAddress
+            );
+
             console.log(resFromSC);
             setClaimAmount(parseInt(resFromSC.toString()) / 1e18);
-        } catch(e){
+        } catch (e) {
             console.log(e);
         }
     };
 
     const handleClaimAmount = async () => {
-        try{
-
+        try {
+            setIsClaiming(true);
             const magic = new Magic(
                 process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
                 {
@@ -532,9 +634,9 @@ const CryptsPage = () => {
                     extensions: [new OAuthExtension()],
                 }
             );
-    
+
             console.log(magic);
-    
+
             const rpcProvider = new ethers.providers.Web3Provider(
                 magic.rpcProvider
             );
@@ -546,15 +648,19 @@ const CryptsPage = () => {
                 signer
             );
             console.log(contractInstance);
-    
+
             let resFromSC = await contractInstance.claimAmount();
             resFromSC = await resFromSC.wait();
             console.log(resFromSC);
             getClaimableInfo();
-        } catch(e){
+            toast.success("Claimed successfully!");
+            setIsClaiming(false);
+        } catch (e) {
+            setIsClaiming(false);
+            toast.error("Error claiming, maybe nothing to claim!");
             console.log(e);
         }
-    }
+    };
 
     return (
         <OuterFrameContainer>
@@ -565,8 +671,49 @@ const CryptsPage = () => {
                     <FeedSection>
                         <SectionHeader>Claimables ✨</SectionHeader>
                         <ClaimablesList>
-                            <ClaimCard onClick={handleClaimAmount}>{claimAmount} MATIC<br/>Claim Now</ClaimCard>
+                            <ClaimCard onClick={handleClaimAmount}>
+                                {isClaiming ? <WhiteLoader /> : <>
+                                    {claimAmount} MATIC
+                                    <br />
+                                    Claim Now
+                                </>}
+                            </ClaimCard>
                         </ClaimablesList>
+                    </FeedSection>
+
+                    <FeedSection>
+                        <SectionHeader>Subscriptions</SectionHeader>
+                        <CreatorsListGrid>
+                        {isSubsLoading && <WhiteLoader label={"Loading..."}/>}
+                    
+                        {subscribedList.map((creator, index) => {
+                            return (
+                                <CreatorCard
+                                    onClick={() => {
+                                        navigate(
+                                            `/creator/${creator.walletAddress}`
+                                            );
+                                        }}
+                                        >
+                                    <CreatorProfilePic
+                                        src={
+                                            creator.profilePic != ""
+                                            ? creator.profilePic
+                                            : "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460__340.png"
+                                        }
+                                        />
+                                    <CreatorDetails>
+                                        <CreatorName>
+                                            {creator.fullName}
+                                        </CreatorName>
+                                        <CreatorStats>
+                                            {parseInt(creator.amount.toString())/1e18}{" MATIC"}
+                                        </CreatorStats>
+                                    </CreatorDetails>
+                                </CreatorCard>
+                            );
+                        })}
+                        </CreatorsListGrid>
                     </FeedSection>
                 </FeedContainer>
             </CreatorPageContainer>

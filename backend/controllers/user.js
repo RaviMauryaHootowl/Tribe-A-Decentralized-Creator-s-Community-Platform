@@ -135,6 +135,26 @@ exports.getAllCreators = async (req, res) => {
     }
 }
 
+exports.getSubscriptionListOfUser = async (req, res) => {
+    try{
+        const {emailId} = req.query;
+        console.log(emailId);
+        const creatorsList = await Creator.find();
+        const updatedCreatorList = [];
+        for(let i = 0; i < creatorsList.length; i++){
+            const isUserSubscribed = creatorsList[i].members.filter((member) => member.emailId == emailId);
+            if(isUserSubscribed.length > 0){
+                const creatorUserInfo = await User.findOne({emailId: creatorsList[i].emailId});
+                updatedCreatorList.push({...(creatorsList[i].toObject()), ...(creatorUserInfo.toObject())});
+            }
+        }
+        return res.send(updatedCreatorList);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error });
+    }
+}
+
 exports.setCreatorInfo = async (req, res) => {
     try{
         const {emailId, name, description, benefits, profilePic, socialUrl} = req.body;
@@ -176,11 +196,13 @@ exports.getCreatorInfo = async (req, res) => {
 exports.joinMembership = async (req, res) => {
     try{
         const {emailIdCreator, emailId} = req.body;
-        await Creator.findOneAndUpdate(
-            {emailId: emailIdCreator},
-            { $push: {members: {emailId}} }
-        ).exec();
-
+        const creatorInfo = await Creator.findOne({emailId: emailIdCreator});
+        if(!creatorInfo.members.includes(emailId)){
+            await Creator.findOneAndUpdate(
+                {emailId: emailIdCreator},
+                { $push: {members: {emailId}} }
+            ).exec();
+        }
         return res.send({message: "success"});
     } catch (error) {
         console.log(error);

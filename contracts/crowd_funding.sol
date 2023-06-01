@@ -18,6 +18,7 @@ contract crowd_funding {
 
     struct Creator {
         string name;
+        address walletAddress;
         string category; //?
         mapping(uint256 => Project) idToProject;
         uint256 noOfProjects;
@@ -47,7 +48,7 @@ contract crowd_funding {
 
     mapping(address => uint256) creatorsAddressToID;
     mapping(uint256 => Creator) idToCreators;
-    uint56 noOfCreators = 0;
+    uint256 noOfCreators = 0;
 
     //creator functions
     function RegisterCreator(
@@ -60,7 +61,7 @@ contract crowd_funding {
 
         creator.name = name;
         creator.category = category;
-
+        creator.walletAddress = msg.sender;
         creator.noOfProjects = 0;
         creator.noOfVotingVentures = 0;
         creator.noOfContributors = 0;
@@ -75,6 +76,19 @@ contract crowd_funding {
         milestone.goal = milestoneGoal;
         milestone.fundRaised = 0;
         milestone.noOfContributors = 0;
+    }
+
+    function getSubscriberList() public view returns(uint256[] memory, address[] memory){
+        uint256 contributorId = contributorsAddressToID[msg.sender];
+        Contributor storage contributor = idToContributor[contributorId];
+        // contributor.creatorToAmount;
+        uint256[] memory retAmount = new uint256[](noOfCreators);
+        address[] memory retAddress = new address[](noOfCreators);
+        for(uint256 i = 0; i < noOfCreators; i++){
+            retAmount[i] = contributor.creatorToAmount[i];
+            retAddress[i] = idToCreators[i].walletAddress;
+        }
+        return (retAmount, retAddress);
     }
 
     // UploadProjects

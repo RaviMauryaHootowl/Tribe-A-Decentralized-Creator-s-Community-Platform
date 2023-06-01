@@ -6,7 +6,12 @@ import spotify from "../../images/spotify.png";
 import youtube from "../../images/youtube.png";
 import music from "../../images/musicImage.png";
 import Modal from "react-modal";
-import { Add, CloseOutlined, UploadFile, ViewTimelineRounded } from "@mui/icons-material";
+import {
+    Add,
+    CloseOutlined,
+    UploadFile,
+    ViewTimelineRounded,
+} from "@mui/icons-material";
 import { StoreContext } from "../../utils/Store";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
@@ -594,10 +599,10 @@ const CreatorFeed = ({ match }) => {
     };
 
     const handleBecomeMember = async () => {
-        if(!isValid(becomeMemberValue)){
+        if (!isValid(becomeMemberValue)) {
             toast.error("Enter correct value!");
             return;
-        }else if(parseFloat(becomeMemberValue) < 0.1){
+        } else if (parseFloat(becomeMemberValue) < 0.1) {
             console.log(parseFloat(becomeMemberValue));
             toast.error("You need to contribute atleast 0.1 MATIC");
             return;
@@ -638,7 +643,6 @@ const CreatorFeed = ({ match }) => {
             );
 
             console.log(resFromSC);
-
             const res = await axios.post(
                 `${process.env.REACT_APP_API}/user/joinMembership`,
                 {
@@ -825,7 +829,7 @@ const CreatorFeed = ({ match }) => {
 
     const navigateToChats = () => {
         navigate(`/chats/${creatorInfo.walletAddress}`);
-    }
+    };
 
     const closeCreateProjectModal = () => {
         setIsCreateProjectModalOpen(false);
@@ -862,7 +866,9 @@ const CreatorFeed = ({ match }) => {
                     <ModalHeader>Become Member</ModalHeader>
                     <TextViewGroup>
                         <span>Perks & Benefits</span>
-                        <TextViewContent>{creatorInfo.benefits}</TextViewContent>
+                        <TextViewContent>
+                            {creatorInfo.benefits}
+                        </TextViewContent>
                     </TextViewGroup>
                     <TextInputGroup>
                         <span>Number of Crypts?</span>
@@ -904,20 +910,22 @@ const CreatorFeed = ({ match }) => {
                             <span>Request Description</span>
                             <TextViewContent>{votingInfo.desc}</TextViewContent>
                         </TextViewGroup>
-                        <VoteBarView>
-                            <VoteBarLabel>Yes</VoteBarLabel>
-                            <VoteBarContainer>
-                                <VoteBarFilled
-                                    percent={votingInfo.percentUp}
-                                ></VoteBarFilled>
-                            </VoteBarContainer>
-                            <VoteBarLabel>No</VoteBarLabel>
-                            <VoteBarContainer>
-                                <VoteBarFilledRed
-                                    percent={votingInfo.percentDown}
-                                ></VoteBarFilledRed>
-                            </VoteBarContainer>
-                        </VoteBarView>
+                        {votingInfo.hasVoted && (
+                            <VoteBarView>
+                                <VoteBarLabel>Yes</VoteBarLabel>
+                                <VoteBarContainer>
+                                    <VoteBarFilled
+                                        percent={votingInfo.percentUp}
+                                    ></VoteBarFilled>
+                                </VoteBarContainer>
+                                <VoteBarLabel>No</VoteBarLabel>
+                                <VoteBarContainer>
+                                    <VoteBarFilledRed
+                                        percent={votingInfo.percentDown}
+                                    ></VoteBarFilledRed>
+                                </VoteBarContainer>
+                            </VoteBarView>
+                        )}
                     </VoteViewContainer>
                     {!votingInfo.hasVoted && (
                         <VotingModalActions>
@@ -1037,6 +1045,11 @@ const CreatorFeed = ({ match }) => {
                         <BlankSpace></BlankSpace>
                         {isMember ? (
                             <>
+                                <BecomeMemberBtn
+                                    onClick={openBecomeMemberModal}
+                                >
+                                    Send More
+                                </BecomeMemberBtn>
                                 <FollowBtn onClick={navigateToChats}>
                                     Chat
                                 </FollowBtn>
@@ -1065,13 +1078,16 @@ const CreatorFeed = ({ match }) => {
                                 rel="noopener noreferrer"
                             >
                                 <WorkCard>
-                                    <img src={`http://www.google.com/s2/favicons?domain=${creatorInfo.socialUrl}`} alt="" />
+                                    <img
+                                        src={`http://www.google.com/s2/favicons?domain=${creatorInfo.socialUrl}`}
+                                        alt=""
+                                    />
                                     Website
                                 </WorkCard>
                             </a>
                         </WorkListContainer>
                     </FeedSection>
-                    <FeedSection>
+                    {/* <FeedSection>
                         <SectionHeader>
                             <span>PROJECTS</span>
                             {state.user.isCreator && (
@@ -1092,7 +1108,7 @@ const CreatorFeed = ({ match }) => {
                                 <span>8th Single: A song</span>
                             </ProjectsCard>
                         </WorkListContainer>
-                    </FeedSection>
+                    </FeedSection> */}
                     <FeedSection>
                         <SectionHeader>
                             <span>POSTS</span>

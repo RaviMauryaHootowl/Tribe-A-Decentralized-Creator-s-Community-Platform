@@ -860,7 +860,7 @@ const Dashboard = () => {
 
     const initiateVotingForRequest = async () => {
         try {
-            setRequestFundsLoading(false);
+            setRequestFundsLoading(true);
             const magic = new Magic(
                 process.env.REACT_APP_MAGICLINK_PUBLISHABLE_KEY,
                 {
