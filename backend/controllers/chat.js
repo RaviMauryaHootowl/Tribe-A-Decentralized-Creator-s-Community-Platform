@@ -35,7 +35,6 @@ exports.sendChat = async (req, res) => {
 exports.getByCreatorWallet = async (req, res) => {
     try {
         const { walletAddress } = req.query;
-
         const creatorChats = await Chat.findOne({ walletAddress });
         return res.send(creatorChats.chats);
     } catch (error) {

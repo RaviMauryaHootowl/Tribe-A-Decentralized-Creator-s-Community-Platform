@@ -808,6 +808,19 @@ const Chats = () => {
         fetchCreatorInfo(params.id);
     }, [params]);
 
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if(creatorInfo.walletAddress){
+                fetchAllChats(creatorInfo.walletAddress);
+            }
+            console.log("fetced");
+            setCount(count+1);
+        }, 3000);
+        return () => clearTimeout(timer);
+    }, [count]);
+
     const fetchCreatorInfo = async (id) => {
         try {
             const res = await axios.get(
