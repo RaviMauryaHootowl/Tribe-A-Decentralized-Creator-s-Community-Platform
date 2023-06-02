@@ -165,7 +165,7 @@ exports.setCreatorInfo = async (req, res) => {
         }
         await User.findOneAndUpdate(
             {emailId},
-            {fullName: name}
+            {fullName: name, userName: name}
         ).exec();
         await Creator.findOneAndUpdate(
             {emailId},

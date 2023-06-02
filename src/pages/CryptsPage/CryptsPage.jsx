@@ -707,7 +707,7 @@ const CryptsPage = () => {
                                             {creator.fullName}
                                         </CreatorName>
                                         <CreatorStats>
-                                            {parseInt(creator.amount.toString())/1e18}{" MATIC"}
+                                            {creator.amount ? parseInt(creator.amount.toString())/1e18 : 0}{" MATIC"}
                                         </CreatorStats>
                                     </CreatorDetails>
                                 </CreatorCard>

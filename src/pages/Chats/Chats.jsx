@@ -679,6 +679,7 @@ const ChatBubbleContainer = styled.div`
 const ChatBubble = styled.div`
     max-width: 40%;
     background-color:${(props) => props.isMe ? "#a9ffca" : "#9e9eff"} ;
+    border: ${(props) => props.isCreator? "#ff4eaf" : "#00000000"} solid 5px;
     color: black;
     border-radius: 1rem;
     padding: 0.5rem 1rem;
@@ -1211,7 +1212,7 @@ const fetchAllChats = async (creatorWalletAddress) => {
                             {
                                 chatsList.map((chat, index) => {
                                 return <ChatBubbleContainer key={index} isMe={chat.walletAddress == state.user.walletAddress}>
-                                        <ChatBubble isMe={chat.walletAddress == state.user.walletAddress}>
+                                        <ChatBubble isMe={chat.walletAddress == state.user.walletAddress} isCreator={chat.walletAddress == params.id}>
                                             <ChatAuthor>{chat.userName}</ChatAuthor>
                                             {chat.chatBody}
                                             <ChatTime>{moment(chat.createdAt).format("hh:mm A")}</ChatTime>
